@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { neighbours } from '../board/board'
-import { extendPath, hitTest, pathWord, type Point } from './path'
+import {
+  crossedTiles,
+  extendPath,
+  extendPathThroughSegment,
+  hitTest,
+  pathWord,
+  type Point,
+} from './path'
 
 // Board layout for reference (4x4, row-major indices):
 //   0  1  2  3
@@ -83,5 +90,51 @@ describe('pathWord', () => {
 
   it('is empty for an empty path', () => {
     expect(pathWord(faces, [])).toBe('')
+  })
+})
+
+describe('fast-swipe interpolation', () => {
+  // Grid of centres, one per cell, spaced `spacing` px apart (row-major).
+  function gridCenters(size: number, spacing = 100): Point[] {
+    const c: Point[] = []
+    for (let i = 0; i < size * size; i++) {
+      c.push({ x: (i % size) * spacing, y: Math.floor(i / size) * spacing })
+    }
+    return c
+  }
+  const RADIUS = 40 // < half of the 100px spacing, so no ambiguous double-hits
+  const STEP = 50 // half a tile width
+  const n7 = (i: number) => neighbours(i, 7)
+
+  it('captures every tile crossed along a straight row (7x7), in order', () => {
+    const c = gridCenters(7)
+    const from = c[21] // row 3, col 0
+    const to = c[27] // row 3, col 6
+    expect(crossedTiles(from, to, c, RADIUS, STEP)).toEqual([22, 23, 24, 25, 26, 27])
+    expect(extendPathThroughSegment([21], from, to, c, RADIUS, STEP, n7)).toEqual([
+      21, 22, 23, 24, 25, 26, 27,
+    ])
+  })
+
+  it('captures a diagonal crossing of the grid (7x7), in order', () => {
+    const c = gridCenters(7)
+    const from = c[0] // top-left
+    const to = c[48] // bottom-right
+    expect(extendPathThroughSegment([0], from, to, c, RADIUS, STEP, n7)).toEqual([
+      0, 8, 16, 24, 32, 40, 48,
+    ])
+  })
+
+  it('rejects a non-adjacent jump when interpolation yields no bridge', () => {
+    // Two far-apart tiles that are NOT adjacent; the finger "jumped" between them.
+    const c: Point[] = [
+      { x: 0, y: 0 },
+      { x: 500, y: 0 },
+    ]
+    const notAdjacent = () => [] as number[]
+    // The segment crosses only the destination tile (no interpolated bridge).
+    expect(crossedTiles(c[0], c[1], c, RADIUS, STEP)).toEqual([1])
+    // ...and because tile 1 is not adjacent to tile 0, it is rejected — not bridged.
+    expect(extendPathThroughSegment([0], c[0], c[1], c, RADIUS, STEP, notAdjacent)).toEqual([0])
   })
 })

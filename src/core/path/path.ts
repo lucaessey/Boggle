@@ -76,3 +76,60 @@ export function hitTest(
 export function pathWord(faces: readonly string[], state: PathState): string {
   return state.map((i) => faces[i]).join('')
 }
+
+/**
+ * Tiles crossed by the line segment from `from` to `to`, in order, with
+ * consecutive duplicates removed. The segment is sampled at intervals no larger
+ * than `step` (use half a tile width) and each sample is hit-tested against the
+ * tile centres — this recovers intermediate tiles that a fast flick skips over
+ * because the browser reported far-apart pointer positions.
+ *
+ * Sampling starts just after `from` (t > 0) so the tile the path is already on
+ * is not re-emitted, and includes the endpoint (t = 1).
+ */
+export function crossedTiles(
+  from: Point,
+  to: Point,
+  centers: readonly Point[],
+  radius: number,
+  step: number,
+): number[] {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const dist = Math.hypot(dx, dy)
+  const steps = Math.max(1, Math.ceil(dist / Math.max(step, 1e-6)))
+  const hits: number[] = []
+  let last = -1
+  for (let s = 1; s <= steps; s++) {
+    const t = s / steps
+    const hit = hitTest({ x: from.x + dx * t, y: from.y + dy * t }, centers, radius)
+    if (hit !== null && hit !== last) {
+      hits.push(hit)
+      last = hit
+    }
+  }
+  return hits
+}
+
+/**
+ * Extend `path` by dragging from `from` to `to`: apply `extendPath` for each
+ * tile crossed along the segment, in order. The normal adjacency and no-reuse
+ * rules apply to every crossed tile, so a genuine non-adjacent jump (e.g. the
+ * finger left the grid and re-entered elsewhere, leaving no interpolated tiles
+ * between) is rejected rather than silently bridged.
+ */
+export function extendPathThroughSegment(
+  path: PathState,
+  from: Point,
+  to: Point,
+  centers: readonly Point[],
+  radius: number,
+  step: number,
+  neighbours: (index: number) => number[],
+): PathState {
+  let next = path
+  for (const tile of crossedTiles(from, to, centers, radius, step)) {
+    next = extendPath(next, tile, neighbours)
+  }
+  return next
+}

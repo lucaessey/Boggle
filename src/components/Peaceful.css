@@ -68,6 +68,17 @@
   text-align: center;
 }
 
+/* Placeholder occupying the progress-bar slot during the countdown, so the
+   layout does not shift when the real bar appears. */
+.progress-placeholder {
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
 /* Win screen. */
 .win-screen {
   position: fixed;

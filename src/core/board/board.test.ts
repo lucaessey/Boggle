@@ -4,13 +4,22 @@ import { neighbours } from './board'
 import { generateBoard } from './generate'
 import { findWordsOfMinLength } from '../dictionary/findWords'
 
-const SIZES = [4, 6, 7]
+const SIZES = [4, 5, 6, 7]
 
 describe('neighbours — adjacency at every size', () => {
   it('4x4: corner 3, edge 5, interior 8', () => {
     expect(neighbours(0, 4)).toHaveLength(3)
     expect(neighbours(1, 4)).toHaveLength(5)
     expect(neighbours(5, 4)).toHaveLength(8)
+  })
+
+  it('5x5: corner 3, edge 5, center 8', () => {
+    expect(neighbours(0, 5)).toHaveLength(3) // top-left corner
+    expect(neighbours(24, 5)).toHaveLength(3) // bottom-right corner
+    expect(neighbours(2, 5)).toHaveLength(5) // top edge
+    expect(neighbours(5, 5)).toHaveLength(5) // left edge
+    expect(neighbours(12, 5)).toHaveLength(8) // exact center (row2,col2)
+    expect(neighbours(6, 5)).toHaveLength(8) // interior
   })
 
   it('6x6: corner 3, edge 5, interior/center 8', () => {
@@ -54,6 +63,13 @@ describe('generateBoard — dice usage (dice-based sizes)', () => {
     expect(used).toEqual([...Array(16).keys()])
   })
 
+  it('5x5 generates 25 tiles and uses each of the 25 dice exactly once', () => {
+    const board = generateBoard(5, 'dice-5')
+    expect(board.cells).toHaveLength(25)
+    const used = board.cells.map((c) => c.dieIndex).sort((a, b) => (a ?? 0) - (b ?? 0))
+    expect(used).toEqual([...Array(25).keys()])
+  })
+
   it('6x6 uses each of the 36 dice exactly once', () => {
     const board = generateBoard(6, 'dice-6')
     const used = board.cells.map((c) => c.dieIndex).sort((a, b) => (a ?? 0) - (b ?? 0))
@@ -90,7 +106,7 @@ describe('generateBoard — seeded determinism at every size', () => {
 describe('generateBoard — meets per-size quality targets', () => {
   for (const size of SIZES) {
     it(`size ${size}: accepted board satisfies every target`, () => {
-      const targets = balance.sizes[String(size) as '4' | '6' | '7'].targets
+      const targets = balance.sizes[String(size) as '4' | '5' | '6' | '7'].targets
       const board = generateBoard(size, `targets-${size}`)
       for (const t of targets) {
         const found = findWordsOfMinLength(board, t.minLength, t.count)

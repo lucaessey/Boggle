@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { generateBoard } from '../core/board/generate'
 import { solveBoard } from '../core/dictionary/solver'
 import { BoardTrace } from './BoardTrace'
+import { Countdown } from './Countdown'
 import { Results } from './Results'
 import { useGamePlay } from './useGamePlay'
 import './Round.css'
 
-type Status = 'idle' | 'running' | 'over'
+type Status = 'countdown' | 'running' | 'over'
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -20,22 +21,21 @@ interface RoundProps {
   onChangeSettings: () => void
 }
 
-/** Timed single round: countdown, live submission feedback, and results. */
+/** Timed round: countdown → play → results. The timer starts at countdown end. */
 export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
   const [board, setBoard] = useState(() => generateBoard(size))
-  const [status, setStatus] = useState<Status>('idle')
+  const [status, setStatus] = useState<Status>('countdown')
   const [remaining, setRemaining] = useState(roundSeconds)
   const [totalWords, setTotalWords] = useState(0)
   const game = useGamePlay(board)
 
-  // Countdown while running.
+  // Countdown while running; the timer only ticks once play has begun.
   useEffect(() => {
     if (status !== 'running') return
     const id = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000)
     return () => clearInterval(id)
   }, [status])
 
-  // End the round when the clock runs out.
   useEffect(() => {
     if (status === 'running' && remaining <= 0) {
       setTotalWords(solveBoard(board).size)
@@ -43,17 +43,17 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     }
   }, [status, remaining, board])
 
-  function startRound() {
+  function beginPlay() {
     game.reset()
     setRemaining(roundSeconds)
-    setStatus('running')
+    setStatus('running') // timer starts now, not when the board was generated
   }
 
   function playAgain() {
     game.reset()
     setBoard(generateBoard(size))
-    setStatus('idle')
     setRemaining(roundSeconds)
+    setStatus('countdown') // fresh countdown
   }
 
   function handleWord(word: string) {
@@ -78,29 +78,26 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     <div className="round">
       <div className="hud">
         <span className="score">Score: {game.score}</span>
-        {status !== 'idle' && (
-          <span className={`timer${remaining <= 10 && status === 'running' ? ' low' : ''}`}>
-            {formatTime(remaining)}
-          </span>
-        )}
+        <span className={`timer${remaining <= 10 && status === 'running' ? ' low' : ''}`}>
+          {formatTime(remaining)}
+        </span>
       </div>
 
-      <BoardTrace board={board} onWord={handleWord} active={status === 'running'} />
+      <BoardTrace
+        board={board}
+        onWord={handleWord}
+        active={status === 'running'}
+        revealed={status !== 'countdown'}
+        overlay={status === 'countdown' ? <Countdown onDone={beginPlay} /> : undefined}
+      />
 
       <div className={`feedback${game.feedback ? ` ${game.feedback.outcome}` : ''}`}>
         {game.feedback ? game.feedback.message : ' '}
       </div>
 
-      {status === 'idle' && (
-        <div className="idle-controls">
-          <button type="button" className="primary" onClick={startRound}>
-            Start · {size}×{size} · {formatTime(roundSeconds)}
-          </button>
-          <button type="button" className="back" onClick={onChangeSettings}>
-            Change settings
-          </button>
-        </div>
-      )}
+      <button type="button" className="back" onClick={onChangeSettings}>
+        Change settings
+      </button>
 
       {status === 'running' && game.found.length > 0 && (
         <section className="found">

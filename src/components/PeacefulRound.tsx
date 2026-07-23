@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { generateBoard } from '../core/board/generate'
 import { goalCount as computeGoal, hasReachedGoal } from '../core/round/peaceful'
 import { BoardTrace } from './BoardTrace'
+import { Countdown } from './Countdown'
 import { Results } from './Results'
 import { WinScreen } from './WinScreen'
 import { solveBoardAsync } from './solveAsync'
@@ -9,7 +10,7 @@ import { useGamePlay } from './useGamePlay'
 import './Round.css'
 import './Peaceful.css'
 
-type Phase = 'loading' | 'playing' | 'over' | 'won'
+type Phase = 'countdown' | 'loading' | 'playing' | 'over' | 'won'
 
 interface PeacefulRoundProps {
   size: number
@@ -25,11 +26,7 @@ function ProgressBar({ found, total, goal }: { found: number; total: number; goa
     <div className="progress" aria-label={`${found} of ${total} words found`}>
       <div className="progress-track">
         <div className="progress-fill" style={{ width: `${fill}%` }} />
-        <div
-          className="progress-goal"
-          style={{ left: `${goalLeft}%` }}
-          title={`Goal: ${goal} words`}
-        />
+        <div className="progress-goal" style={{ left: `${goalLeft}%` }} title={`Goal: ${goal} words`} />
       </div>
       <div className="progress-text">
         {found} / {total} ({pct}%) · goal {goal}
@@ -39,29 +36,40 @@ function ProgressBar({ found, total, goal }: { found: number; total: number; goa
 }
 
 /**
- * Untimed, goal-based round. The board is fully solved off the main thread to
- * get the exact total word count; the player wins on reaching the goal, or can
- * End Round at any time.
+ * Untimed, goal-based round. The board is solved off the main thread while the
+ * countdown runs, hiding most of the solve time; if the solve is still running
+ * when the countdown ends, a brief loading state is shown before play begins.
  */
 export function PeacefulRound({ size, goalPercentage, onChangeSettings }: PeacefulRoundProps) {
   const [board, setBoard] = useState(() => generateBoard(size))
-  const [phase, setPhase] = useState<Phase>('loading')
+  const [phase, setPhase] = useState<Phase>('countdown')
   const [totalWords, setTotalWords] = useState(0)
   const game = useGamePlay(board)
 
-  // Solve the board (worker, with main-thread fallback) on each new board.
+  const solveDone = useRef(false)
+  const countdownDone = useRef(false)
+
+  // Start the solve as soon as the board exists; countdown runs concurrently.
   useEffect(() => {
+    solveDone.current = false
+    countdownDone.current = false
+    setPhase('countdown')
     let cancelled = false
-    setPhase('loading')
     solveBoardAsync(board).then((r) => {
       if (cancelled) return
       setTotalWords(r.total)
-      setPhase('playing')
+      solveDone.current = true
+      if (countdownDone.current) setPhase('playing') // countdown already finished waiting
     })
     return () => {
       cancelled = true
     }
   }, [board])
+
+  function onCountdownDone() {
+    countdownDone.current = true
+    setPhase(solveDone.current ? 'playing' : 'loading') // hold on loading if solve is slow
+  }
 
   const goal = computeGoal(totalWords, goalPercentage)
 
@@ -69,14 +77,14 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
     if (phase !== 'playing') return
     if (game.submit(word) === 'accepted') {
       if (hasReachedGoal(game.foundCount.current, computeGoal(totalWords, goalPercentage))) {
-        setPhase('won') // reaching the goal locks input immediately
+        setPhase('won')
       }
     }
   }
 
   function playAgain() {
     game.reset()
-    setBoard(generateBoard(size)) // effect re-solves and returns to 'playing'
+    setBoard(generateBoard(size)) // effect restarts countdown + solve
   }
 
   if (phase === 'loading') {
@@ -90,12 +98,7 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
 
   if (phase === 'won') {
     return (
-      <WinScreen
-        score={game.score}
-        found={game.found}
-        totalWords={totalWords}
-        onDone={onChangeSettings}
-      />
+      <WinScreen score={game.score} found={game.found} totalWords={totalWords} onDone={onChangeSettings} />
     )
   }
 
@@ -112,22 +115,34 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
     )
   }
 
+  const counting = phase === 'countdown'
+
   return (
     <div className="round peaceful">
-      <ProgressBar found={game.found.length} total={totalWords} goal={goal} />
+      {counting ? (
+        <div className="progress-placeholder">Peaceful · goal {goalPercentage}%</div>
+      ) : (
+        <ProgressBar found={game.found.length} total={totalWords} goal={goal} />
+      )}
 
       <div className="hud">
         <span className="score">Score: {game.score}</span>
       </div>
 
-      <BoardTrace board={board} onWord={handleWord} active={phase === 'playing'} />
+      <BoardTrace
+        board={board}
+        onWord={handleWord}
+        active={phase === 'playing'}
+        revealed={!counting}
+        overlay={counting ? <Countdown onDone={onCountdownDone} /> : undefined}
+      />
 
       <div className={`feedback${game.feedback ? ` ${game.feedback.outcome}` : ''}`}>
         {game.feedback ? game.feedback.message : ' '}
       </div>
 
       <div className="idle-controls">
-        <button type="button" className="secondary" onClick={() => setPhase('over')}>
+        <button type="button" className="secondary" onClick={() => setPhase('over')} disabled={counting}>
           End Round
         </button>
         <button type="button" className="back" onClick={onChangeSettings}>
