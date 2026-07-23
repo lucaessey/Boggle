@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-07-23
+goal: Deliver a deterministic, seedable Boggle board model as a pure module with
+  full unit tests.

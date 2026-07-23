@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "solve:demo": "vite-node scripts/solve-demo.ts"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -20,6 +23,8 @@
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vite-node": "^6.0.0",
+    "vitest": "^4.1.10"
   }
 }

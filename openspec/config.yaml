@@ -1,0 +1,37 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Mirrors openspec/project.md (kept in sync for human readers).
+context: |
+  Boggle-like word game PWA. Solo developer. Mobile-first, touch-based UI.
+
+  Stack: Vite + React + TypeScript. Deployed to GitHub Pages. No backend;
+  all state persisted in localStorage.
+
+  All tunable constants live in src/balance.json. No magic numbers in
+  components or logic modules — read every constant from balance.json.
+
+  Architecture: core game logic (board generation, dictionary/solver, path
+  state machine, scoring) must be pure, DOM-free, unit-tested modules. React
+  components are thin adapters over those modules.
+
+  Planned change sequence: board-and-dice, dictionary-and-solver, path-input,
+  round-core, pass-and-play, pwa-and-deploy.
+
+  Game modes in scope: classic timed single round, infinite/practice, and
+  pass-and-play multiplayer for 2-6 players.
+  Out of scope: daily puzzle, online multiplayer, accounts.
+
+  Scoring: pass-and-play uses classic Boggle duplicate cancellation — any word
+  found by two or more players scores zero for all of them.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours

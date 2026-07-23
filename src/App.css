@@ -18,3 +18,8 @@
   margin: 0;
   opacity: 0.7;
 }
+
+.seed {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}

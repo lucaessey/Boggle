@@ -1,32 +1,38 @@
-# React + TypeScript + Vite
+# Boggle
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A Boggle-like word game, built as a mobile-first PWA.
 
-Currently, two official plugins are available:
+- **Stack:** Vite + React + TypeScript
+- **Deploy target:** GitHub Pages (no backend; all state in `localStorage`)
+- **Vite `base`:** set to `./` so the build works from a Pages project subpath.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Development
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # start the dev server
+npm run build    # typecheck + production build
+npm test         # run unit tests (Vitest)
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Balance file
+
+`src/balance.json` is the single source of truth for all tunable constants.
+There should be **no magic numbers** elsewhere in the codebase — components and
+logic import their values from here.
+
+### `scoreByLength`
+
+The keys of `scoreByLength` are **minimum word lengths**, and each value is the
+points awarded for a word of that length. A word scores the value of the
+largest key that is less than or equal to its length. The key `"8"` therefore
+means **"8 or more letters"** — every word of length 8+ scores 11 points.
+
+| Word length | Points |
+| ----------- | ------ |
+| 3           | 1      |
+| 4           | 1      |
+| 5           | 2      |
+| 6           | 3      |
+| 7           | 5      |
+| 8 or more   | 11     |
