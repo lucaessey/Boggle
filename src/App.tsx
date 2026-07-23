@@ -1,19 +1,42 @@
 import { useState } from 'react'
-import { generateBoard } from './core/board/board'
-import { BoardView } from './components/BoardView'
+import type { GameConfig } from './components/gameConfig'
+import { Menu } from './components/Menu'
+import { PeacefulRound } from './components/PeacefulRound'
+import { Round } from './components/Round'
 import './App.css'
 
 function App() {
-  // Generate one board on first render. A fixed seed keeps it stable across
-  // reloads and StrictMode's double-invoke; interaction and re-rolling come in
-  // later changes.
-  const [board] = useState(() => generateBoard('demo'))
+  const [config, setConfig] = useState<GameConfig | null>(null)
+
+  function content() {
+    if (config === null) return <Menu onStart={setConfig} />
+
+    // Remount on a settings change so the round resets cleanly.
+    const key =
+      config.mode === 'timed'
+        ? `t-${config.size}-${config.length}`
+        : `p-${config.size}-${config.goalPercentage}`
+    const back = () => setConfig(null)
+
+    if (config.mode === 'timed') {
+      return (
+        <Round key={key} size={config.size} roundSeconds={config.length} onChangeSettings={back} />
+      )
+    }
+    return (
+      <PeacefulRound
+        key={key}
+        size={config.size}
+        goalPercentage={config.goalPercentage}
+        onChangeSettings={back}
+      />
+    )
+  }
 
   return (
     <main className="app">
       <h1>Boggle</h1>
-      <BoardView board={board} />
-      <p className="seed">seed: {String(board.seed)}</p>
+      {content()}
     </main>
   )
 }

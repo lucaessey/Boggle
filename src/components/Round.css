@@ -1,0 +1,166 @@
+.round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(92vw, 24rem);
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.timer {
+  font-variant-numeric: tabular-nums;
+}
+
+.timer.low {
+  color: #ff5a5a;
+}
+
+.primary {
+  padding: 0.7rem 1.6rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--tile-selected-bg, #4f8cff);
+  cursor: pointer;
+}
+
+.primary:hover {
+  filter: brightness(1.08);
+}
+
+.secondary {
+  padding: 0.7rem 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: 2px solid var(--tile-selected-bg, #4f8cff);
+  border-radius: 10px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.idle-controls,
+.results-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.results-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.back {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.back:hover {
+  opacity: 1;
+}
+
+/* Submission feedback: distinct colour per outcome. */
+.feedback {
+  min-height: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: pre;
+}
+
+.feedback.accepted {
+  color: #35c46a;
+}
+
+.feedback.too-short {
+  color: #e0a83a;
+}
+
+.feedback.not-a-word {
+  color: #ff5a5a;
+}
+
+.feedback.already-found {
+  color: #4f9bff;
+}
+
+/* Found-words list (during the round). */
+.found {
+  width: 100%;
+}
+
+.found h2,
+.results h2 {
+  margin: 0.25rem 0;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.found ul,
+.results-words {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.15rem 0.75rem;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.found li,
+.results-words li {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  padding: 0.1rem 0;
+}
+
+.pts {
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Results screen. */
+.results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: center;
+}
+
+.final-score {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.coverage {
+  margin: 0;
+  opacity: 0.75;
+}
+
+.results-words {
+  width: 100%;
+  text-align: left;
+  margin: 0.5rem 0;
+}

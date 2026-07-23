@@ -9,8 +9,11 @@ export interface Cell {
   row: number
   /** Column of this cell, 0-based. */
   col: number
-  /** Index (0..15) of the die placed on this cell, into balance.json `dice`. */
-  dieIndex: number
+  /**
+   * Index of the die placed on this cell, into the size's `dice` array.
+   * Present only for dice-based sizes (4×4, 6×6); absent for the 7×7 bag.
+   */
+  dieIndex?: number
   /** The face of that die currently shown, e.g. "A" or "Qu". */
   face: Face
 }

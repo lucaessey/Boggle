@@ -1,77 +1,101 @@
 import { describe, it, expect } from 'vitest'
 import balance from '../../balance.json'
-import { generateBoard, neighbours } from './board'
+import { neighbours } from './board'
+import { generateBoard } from './generate'
+import { findWordsOfMinLength } from '../dictionary/findWords'
 
-const SIZE = balance.gridSize
+const SIZES = [4, 6, 7]
 
-describe('generateBoard — determinism', () => {
-  it('produces an identical board for the same seed', () => {
-    const a = generateBoard('seed-1')
-    const b = generateBoard('seed-1')
-    expect(a).toEqual(b)
-    // Explicitly: same dice assignment and same face on every cell.
-    expect(a.cells.map((c) => c.dieIndex)).toEqual(b.cells.map((c) => c.dieIndex))
-    expect(a.cells.map((c) => c.face)).toEqual(b.cells.map((c) => c.face))
+describe('neighbours — adjacency at every size', () => {
+  it('4x4: corner 3, edge 5, interior 8', () => {
+    expect(neighbours(0, 4)).toHaveLength(3)
+    expect(neighbours(1, 4)).toHaveLength(5)
+    expect(neighbours(5, 4)).toHaveLength(8)
   })
 
-  it('produces different boards for different seeds', () => {
-    const a = generateBoard('seed-1')
-    const b = generateBoard('seed-2')
-    const faceString = (board: typeof a) => board.cells.map((c) => c.face).join('')
-    expect(faceString(a)).not.toEqual(faceString(b))
+  it('6x6: corner 3, edge 5, interior/center 8', () => {
+    expect(neighbours(0, 6)).toHaveLength(3) // top-left corner
+    expect(neighbours(35, 6)).toHaveLength(3) // bottom-right corner
+    expect(neighbours(1, 6)).toHaveLength(5) // top edge
+    expect(neighbours(6, 6)).toHaveLength(5) // left edge
+    expect(neighbours(7, 6)).toHaveLength(8) // interior (row1,col1)
+    expect(neighbours(14, 6)).toHaveLength(8) // center-ish (row2,col2)
+  })
+
+  it('7x7: corner 3, edge 5, center 8', () => {
+    expect(neighbours(0, 7)).toHaveLength(3) // corner
+    expect(neighbours(48, 7)).toHaveLength(3) // corner
+    expect(neighbours(3, 7)).toHaveLength(5) // top edge
+    expect(neighbours(7, 7)).toHaveLength(5) // left edge
+    expect(neighbours(24, 7)).toHaveLength(8) // exact center (row3,col3)
+    expect(neighbours(8, 7)).toHaveLength(8) // interior
+  })
+
+  it('returns the exact neighbour set for a 6x6 interior cell', () => {
+    expect(neighbours(7, 6).sort((a, b) => a - b)).toEqual([0, 1, 2, 6, 8, 12, 13, 14])
   })
 })
 
-describe('generateBoard — dice usage', () => {
-  it('uses each of the 16 dice exactly once', () => {
-    const board = generateBoard('dice-check')
-    const used = board.cells.map((c) => c.dieIndex).sort((x, y) => x - y)
-    expect(used).toEqual([...Array(SIZE * SIZE).keys()])
+describe('generateBoard — dimensions and tile counts', () => {
+  for (const size of SIZES) {
+    it(`size ${size} produces ${size * size} cells with non-empty faces`, () => {
+      const board = generateBoard(size, `dims-${size}`)
+      expect(board.size).toBe(size)
+      expect(board.cells).toHaveLength(size * size)
+      for (const cell of board.cells) expect(cell.face.length).toBeGreaterThan(0)
+    })
+  }
+})
+
+describe('generateBoard — dice usage (dice-based sizes)', () => {
+  it('4x4 uses each of the 16 dice exactly once', () => {
+    const board = generateBoard(4, 'dice-4')
+    const used = board.cells.map((c) => c.dieIndex).sort((a, b) => (a ?? 0) - (b ?? 0))
+    expect(used).toEqual([...Array(16).keys()])
   })
 
-  it('shows a real face of the assigned die on each cell', () => {
-    const board = generateBoard('faces')
-    for (const cell of board.cells) {
-      expect(balance.dice[cell.dieIndex]).toContain(cell.face)
-    }
+  it('6x6 uses each of the 36 dice exactly once', () => {
+    const board = generateBoard(6, 'dice-6')
+    const used = board.cells.map((c) => c.dieIndex).sort((a, b) => (a ?? 0) - (b ?? 0))
+    expect(used).toEqual([...Array(36).keys()])
   })
+})
 
-  it('keeps "Qu" as a single face, never split', () => {
-    // The die at index 10 in balance.json carries the "Qu" face. Search seeds
-    // until that die rolls "Qu", then assert the cell face is exactly "Qu".
-    let found = false
-    for (let s = 0; s < 200 && !found; s++) {
-      const board = generateBoard(s)
-      const quCell = board.cells.find((c) => c.face === 'Qu')
-      if (quCell) {
-        expect(quCell.face).toBe('Qu')
-        expect(quCell.face.length).toBe(2)
-        found = true
+describe('generateBoard — 7x7 bag vowel floor', () => {
+  it('has at least vowelMin vowel tiles', () => {
+    const vowelMin = balance.sizes['7'].vowelMin
+    const vowels: string[] = balance.vowels
+    const board = generateBoard(7, 'vowels-7')
+    const vowelCount = board.cells.filter((c) => vowels.includes(c.face)).length
+    expect(vowelCount).toBeGreaterThanOrEqual(vowelMin)
+  })
+})
+
+describe('generateBoard — seeded determinism at every size', () => {
+  for (const size of SIZES) {
+    it(`size ${size}: same seed yields an identical board`, () => {
+      const a = generateBoard(size, `det-${size}`)
+      const b = generateBoard(size, `det-${size}`)
+      expect(a.cells.map((c) => c.face)).toEqual(b.cells.map((c) => c.face))
+    })
+  }
+
+  it('different seeds yield different boards (4x4)', () => {
+    const a = generateBoard(4, 'seed-a').cells.map((c) => c.face).join('')
+    const b = generateBoard(4, 'seed-b').cells.map((c) => c.face).join('')
+    expect(a).not.toEqual(b)
+  })
+})
+
+describe('generateBoard — meets per-size quality targets', () => {
+  for (const size of SIZES) {
+    it(`size ${size}: accepted board satisfies every target`, () => {
+      const targets = balance.sizes[String(size) as '4' | '6' | '7'].targets
+      const board = generateBoard(size, `targets-${size}`)
+      for (const t of targets) {
+        const found = findWordsOfMinLength(board, t.minLength, t.count)
+        expect(found.words.length).toBeGreaterThanOrEqual(t.count)
       }
-    }
-    expect(found).toBe(true)
-  })
-})
-
-describe('neighbours — adjacency', () => {
-  // Indices assume a 4x4 board (SIZE === 4).
-  it('returns 3 neighbours for a corner cell', () => {
-    expect(neighbours(0)).toHaveLength(3) // top-left
-    expect(neighbours(SIZE - 1)).toHaveLength(3) // top-right
-    expect(neighbours(SIZE * SIZE - 1)).toHaveLength(3) // bottom-right
-  })
-
-  it('returns 5 neighbours for a non-corner edge cell', () => {
-    expect(neighbours(1)).toHaveLength(5) // top edge
-    expect(neighbours(SIZE)).toHaveLength(5) // left edge (index 4 on 4x4)
-  })
-
-  it('returns 8 neighbours for an interior cell', () => {
-    expect(neighbours(5)).toHaveLength(8) // interior on 4x4
-    expect(neighbours(10)).toHaveLength(8)
-  })
-
-  it('returns the correct neighbour set for the top-left corner', () => {
-    expect(neighbours(0).sort((a, b) => a - b)).toEqual([1, SIZE, SIZE + 1])
-  })
+    })
+  }
 })

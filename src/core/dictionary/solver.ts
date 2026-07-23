@@ -41,7 +41,7 @@ export function solveBoard(board: Board): SolveResult {
       results.set(nextWord, [...path])
     }
 
-    for (const nb of neighbours(index)) {
+    for (const nb of neighbours(index, board.size)) {
       if (!visited[nb]) visit(nb, next, nextWord)
     }
 
@@ -54,4 +54,48 @@ export function solveBoard(board: Board): SolveResult {
   }
 
   return results
+}
+
+/**
+ * Find the first valid path that spells `word` on the board, or null if none.
+ *
+ * Same adjacency and no-reuse rules as drag input; a "Qu" tile consumes both
+ * letters ("qu") of the word. DFS with early exit on the first path found — it
+ * does NOT enumerate all paths. `word` need not be a dictionary word (this only
+ * checks board reachability); dictionary validity is a separate check.
+ */
+export function hasPath(board: Board, word: string): number[] | null {
+  const target = word.toLowerCase()
+  if (target.length === 0) return null
+  const faces = board.cells.map((c) => c.face.toLowerCase())
+  const visited = new Array<boolean>(board.cells.length).fill(false)
+  const path: number[] = []
+
+  // Match `faces[index]` (1 or 2 chars) against `target` starting at `pos`.
+  const visit = (index: number, pos: number): number[] | null => {
+    const face = faces[index]
+    if (!target.startsWith(face, pos)) return null
+    const nextPos = pos + face.length
+
+    visited[index] = true
+    path.push(index)
+    if (nextPos === target.length) return [...path]
+
+    for (const nb of neighbours(index, board.size)) {
+      if (!visited[nb]) {
+        const found = visit(nb, nextPos)
+        if (found) return found // early exit on first path
+      }
+    }
+
+    visited[index] = false
+    path.pop()
+    return null
+  }
+
+  for (let i = 0; i < board.cells.length; i++) {
+    const found = visit(i, 0)
+    if (found) return found
+  }
+  return null
 }

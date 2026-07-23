@@ -1,0 +1,114 @@
+/* Loading state while the worker solves the board. */
+.solving {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 4px solid rgba(128, 128, 128, 0.3);
+  border-top-color: var(--tile-selected-bg, #4f8cff);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+/* Progress bar (top of the Peaceful play screen). */
+.progress {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.progress-track {
+  position: relative;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.25);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--tile-selected-bg, #4f8cff);
+  transition: width 0.25s ease;
+}
+
+.progress-goal {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: calc(100% + 6px);
+  background: #35c46a;
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+  text-align: center;
+}
+
+/* Win screen. */
+.win-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 15, 0.92);
+  z-index: 50;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+.confetti-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.win-content {
+  position: relative;
+  text-align: center;
+  color: #fff;
+  z-index: 1;
+}
+
+.win-title {
+  font-size: clamp(2.5rem, 12vw, 4.5rem);
+  margin: 0;
+  color: #fff;
+}
+
+.win-stats {
+  font-size: 1.2rem;
+  margin: 0.5rem 0 0;
+}
+
+.win-hint {
+  margin-top: 1.5rem;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}

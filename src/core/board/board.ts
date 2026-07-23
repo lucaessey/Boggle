@@ -1,78 +1,139 @@
 /**
- * Pure, DOM-free Boggle board model.
+ * Pure, DOM-free board primitives, generalised over board size.
  *
- * `generateBoard` builds a square board from the official dice defined in
- * balance.json, driven entirely by a seeded RNG so the same seed always yields
- * the same board. `neighbours` returns the up-to-8 adjacent cell indices.
- *
- * No React, no `window`/`document` — this module is unit-tested in isolation.
+ * `neighbours` works for any N×N grid. `generateRawBoard` produces a single
+ * candidate board from the size's letter source in balance.json (dice for 4/6,
+ * a frequency-weighted bag for 7), driven by a seeded RNG. Quality-guaranteed
+ * generation (reroll until targets are met) lives in ./generate.ts.
  */
 import balance from '../../balance.json'
 import { Rng } from './rng'
 import type { Board, Cell, Face } from './types'
 
-const GRID_SIZE = balance.gridSize
-const DICE: readonly Face[][] = balance.dice
+/** Per-size config block from balance.json. */
+interface SizeConfig {
+  tileHitRadiusPx: number
+  targets?: { minLength: number; count: number }[]
+  dice?: Face[][]
+  bag?: Record<string, number>
+  vowelMin?: number
+}
 
-/**
- * Generate a board. With a `seed`, generation is deterministic: the same seed
- * reproduces an identical board (both dice-to-cell assignment and the face
- * chosen on each die are driven by the seeded RNG). Without a seed, a random
- * seed is chosen so each call differs.
- */
-export function generateBoard(seed?: number | string): Board {
-  const resolvedSeed = seed ?? randomSeed()
-  const rng = new Rng(resolvedSeed)
+const SIZES = balance.sizes as Record<string, SizeConfig>
+const VOWELS: readonly string[] = balance.vowels
 
-  const cellCount = GRID_SIZE * GRID_SIZE
-
-  // 1. Assign dice to cells: a seeded Fisher-Yates shuffle of die indices.
-  const dieOrder = [...Array(cellCount).keys()]
-  for (let i = dieOrder.length - 1; i > 0; i--) {
-    const j = rng.intBetween(0, i + 1)
-    ;[dieOrder[i], dieOrder[j]] = [dieOrder[j], dieOrder[i]]
-  }
-
-  // 2. For each cell, roll one face of its assigned die (seeded).
-  const cells: Cell[] = dieOrder.map((dieIndex, index) => {
-    const faces = DICE[dieIndex]
-    const face = faces[rng.intBetween(0, faces.length)]
-    return {
-      index,
-      row: Math.floor(index / GRID_SIZE),
-      col: index % GRID_SIZE,
-      dieIndex,
-      face,
-    }
-  })
-
-  return { size: GRID_SIZE, cells, seed: resolvedSeed }
+/** Config for a size, or throw if the size is not configured. */
+export function sizeConfig(size: number): SizeConfig {
+  const cfg = SIZES[String(size)]
+  if (!cfg) throw new Error(`No balance.json config for board size ${size}`)
+  return cfg
 }
 
 /**
- * Neighbours of a cell: the indices of its up-to-8 orthogonal and diagonal
- * neighbours on a GRID_SIZE x GRID_SIZE board. Corner cells have 3, edge cells
- * 5, interior cells 8.
+ * Neighbours of a cell on an N×N board: the indices of its up-to-8 orthogonal
+ * and diagonal neighbours. Corner cells have 3, edge cells 5, interior 8.
  */
-export function neighbours(cellIndex: number): number[] {
-  const row = Math.floor(cellIndex / GRID_SIZE)
-  const col = cellIndex % GRID_SIZE
+export function neighbours(cellIndex: number, size: number): number[] {
+  const row = Math.floor(cellIndex / size)
+  const col = cellIndex % size
   const result: number[] = []
-
   for (let dr = -1; dr <= 1; dr++) {
     for (let dc = -1; dc <= 1; dc++) {
       if (dr === 0 && dc === 0) continue
       const r = row + dr
       const c = col + dc
-      if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-        result.push(r * GRID_SIZE + c)
+      if (r >= 0 && r < size && c >= 0 && c < size) {
+        result.push(r * size + c)
       }
     }
   }
   return result
 }
 
-/** A random seed for un-seeded generation. Only used when no seed is given. */
-function randomSeed(): number {
-  return Math.floor(Math.random() * 0xffffffff)
+/** Fisher-Yates shuffle of a copy of `items`, driven by the seeded RNG. */
+function shuffled<T>(items: readonly T[], rng: Rng): T[] {
+  const arr = [...items]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = rng.intBetween(0, i + 1)
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
+/** Dice-based faces: assign dice to cells (shuffled) and roll one face each. */
+function rollDiceFaces(dice: Face[][], size: number, rng: Rng): Cell[] {
+  const cellCount = size * size
+  const dieOrder = shuffled([...Array(cellCount).keys()], rng)
+  return dieOrder.map((dieIndex, index) => {
+    const die = dice[dieIndex]
+    return {
+      index,
+      row: Math.floor(index / size),
+      col: index % size,
+      dieIndex,
+      face: die[rng.intBetween(0, die.length)],
+    }
+  })
+}
+
+/** Expand a bag distribution ({letter: count}) into a flat array of faces. */
+function expandBag(bag: Record<string, number>): Face[] {
+  const out: Face[] = []
+  for (const [face, count] of Object.entries(bag)) {
+    for (let i = 0; i < count; i++) out.push(face)
+  }
+  return out
+}
+
+/**
+ * Bag-based faces: draw `size*size` tiles without replacement from the bag,
+ * reshuffling until at least `vowelMin` vowels are present. Deterministic given
+ * the RNG. Falls back to the best (most-vowel) draw if the floor can't be met
+ * within a bounded number of attempts.
+ */
+function drawBagFaces(
+  bag: Record<string, number>,
+  size: number,
+  vowelMin: number,
+  rng: Rng,
+): Cell[] {
+  const cellCount = size * size
+  const pool = expandBag(bag)
+  const isVowel = (f: Face) => VOWELS.includes(f)
+
+  let best: Face[] | null = null
+  let bestVowels = -1
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const draw = shuffled(pool, rng).slice(0, cellCount)
+    const vowels = draw.filter(isVowel).length
+    if (vowels >= vowelMin) {
+      best = draw
+      break
+    }
+    if (vowels > bestVowels) {
+      bestVowels = vowels
+      best = draw
+    }
+  }
+  const faces = best as Face[]
+  return faces.map((face, index) => ({
+    index,
+    row: Math.floor(index / size),
+    col: index % size,
+    face,
+  }))
+}
+
+/** Build a single candidate board for `size` from its configured letter source. */
+export function generateRawBoard(size: number, rng: Rng, seed: number | string): Board {
+  const cfg = sizeConfig(size)
+  let cells: Cell[]
+  if (cfg.dice) {
+    cells = rollDiceFaces(cfg.dice, size, rng)
+  } else if (cfg.bag) {
+    cells = drawBagFaces(cfg.bag, size, cfg.vowelMin ?? 0, rng)
+  } else {
+    throw new Error(`Size ${size} has no dice or bag letter source`)
+  }
+  return { size, cells, seed }
 }

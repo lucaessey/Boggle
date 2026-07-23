@@ -1,27 +1,95 @@
 {
-  "roundSeconds": 180,
   "minWordLength": 3,
   "maxWordLength": 16,
-  "gridSize": 4,
-  "scoreByLength": { "3": 1, "4": 1, "5": 2, "6": 3, "7": 5, "8": 11 },
-  "tileHitRadiusPx": 28,
   "maxPlayers": 6,
-  "dice": [
-    ["A", "A", "E", "E", "G", "N"],
-    ["E", "L", "R", "T", "T", "Y"],
-    ["A", "O", "O", "T", "T", "W"],
-    ["A", "B", "B", "J", "O", "O"],
-    ["E", "H", "R", "T", "V", "W"],
-    ["C", "I", "M", "O", "T", "U"],
-    ["D", "I", "S", "T", "T", "Y"],
-    ["E", "I", "O", "S", "S", "T"],
-    ["D", "E", "L", "R", "V", "Y"],
-    ["A", "C", "H", "O", "P", "S"],
-    ["H", "I", "M", "N", "Qu", "U"],
-    ["E", "E", "I", "N", "S", "U"],
-    ["E", "E", "G", "H", "N", "W"],
-    ["A", "F", "F", "K", "P", "S"],
-    ["H", "L", "N", "N", "R", "Z"],
-    ["D", "E", "I", "L", "R", "X"]
-  ]
+  "maxGenerationAttempts": 50,
+  "roundLengths": [60, 90, 120, 180, 240, 300],
+  "peaceful": { "goalPercentages": [25, 50, 75, 100], "winScreenSeconds": 5 },
+  "vowels": ["A", "E", "I", "O", "U"],
+  "haptics": { "enabled": true, "selectMs": 8, "acceptMs": 25 },
+  "scoring": { "minLength": 3, "basePoints": 1, "pointsPerExtraLetter": 1 },
+  "sizes": {
+    "4": {
+      "tileHitRadiusPx": 28,
+      "targets": [{ "minLength": 5, "count": 1 }],
+      "dice": [
+        ["A", "A", "E", "E", "G", "N"],
+        ["E", "L", "R", "T", "T", "Y"],
+        ["A", "O", "O", "T", "T", "W"],
+        ["A", "B", "B", "J", "O", "O"],
+        ["E", "H", "R", "T", "V", "W"],
+        ["C", "I", "M", "O", "T", "U"],
+        ["D", "I", "S", "T", "T", "Y"],
+        ["E", "I", "O", "S", "S", "T"],
+        ["D", "E", "L", "R", "V", "Y"],
+        ["A", "C", "H", "O", "P", "S"],
+        ["H", "I", "M", "N", "Qu", "U"],
+        ["E", "E", "I", "N", "S", "U"],
+        ["E", "E", "G", "H", "N", "W"],
+        ["A", "F", "F", "K", "P", "S"],
+        ["H", "L", "N", "N", "R", "Z"],
+        ["D", "E", "I", "L", "R", "X"]
+      ]
+    },
+    "6": {
+      "tileHitRadiusPx": 24,
+      "targets": [
+        { "minLength": 5, "count": 3 },
+        { "minLength": 6, "count": 1 }
+      ],
+      "dice": [
+        ["A", "A", "A", "F", "R", "S"],
+        ["A", "A", "E", "E", "E", "E"],
+        ["A", "A", "E", "E", "O", "O"],
+        ["A", "A", "F", "I", "R", "S"],
+        ["A", "B", "D", "E", "I", "O"],
+        ["A", "D", "E", "N", "N", "N"],
+        ["A", "E", "E", "E", "E", "M"],
+        ["A", "E", "E", "G", "M", "U"],
+        ["A", "E", "G", "M", "N", "N"],
+        ["A", "E", "I", "L", "M", "N"],
+        ["A", "E", "I", "N", "O", "U"],
+        ["A", "F", "I", "R", "S", "Y"],
+        ["A", "E", "H", "N", "R", "T"],
+        ["B", "B", "J", "K", "X", "Z"],
+        ["C", "C", "E", "N", "S", "T"],
+        ["C", "D", "D", "L", "N", "N"],
+        ["C", "E", "I", "I", "T", "T"],
+        ["C", "E", "I", "P", "S", "T"],
+        ["C", "F", "G", "N", "U", "Y"],
+        ["D", "D", "H", "N", "O", "T"],
+        ["D", "H", "H", "L", "O", "R"],
+        ["D", "H", "H", "N", "O", "W"],
+        ["D", "H", "L", "N", "O", "R"],
+        ["E", "H", "I", "L", "R", "S"],
+        ["E", "I", "I", "L", "S", "T"],
+        ["E", "I", "L", "P", "S", "T"],
+        ["E", "I", "O", "S", "T", "U"],
+        ["E", "M", "T", "T", "T", "O"],
+        ["E", "N", "S", "S", "S", "U"],
+        ["G", "O", "R", "R", "V", "W"],
+        ["H", "I", "R", "S", "T", "V"],
+        ["H", "O", "P", "R", "S", "T"],
+        ["I", "P", "R", "S", "Y", "Y"],
+        ["J", "K", "Qu", "W", "X", "Z"],
+        ["N", "O", "O", "T", "U", "W"],
+        ["O", "O", "O", "T", "T", "U"]
+      ]
+    },
+    "7": {
+      "tileHitRadiusPx": 20,
+      "vowelMin": 14,
+      "targets": [
+        { "minLength": 5, "count": 1 },
+        { "minLength": 6, "count": 6 },
+        { "minLength": 7, "count": 1 }
+      ],
+      "bag": {
+        "A": 24, "B": 5, "C": 8, "D": 12, "E": 38, "F": 6, "G": 6, "H": 15,
+        "I": 21, "J": 3, "K": 3, "L": 11, "M": 7, "N": 23, "O": 24, "P": 6,
+        "Qu": 2, "R": 17, "S": 21, "T": 26, "U": 10, "V": 4, "W": 7, "X": 3,
+        "Y": 7, "Z": 3
+      }
+    }
+  }
 }

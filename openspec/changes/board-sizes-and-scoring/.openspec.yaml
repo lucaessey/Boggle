@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-07-23
+goal: Selectable board sizes and round lengths with quality-guaranteed
+  generation and linear scoring, via a menu flow.

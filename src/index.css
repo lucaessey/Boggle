@@ -64,6 +64,9 @@
 
 body {
   margin: 0;
+  /* No page-level pull-to-refresh / bounce; the grid handles its own drags. */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1,
@@ -93,6 +96,13 @@ h2 {
 }
 p {
   margin: 0;
+}
+
+/* Controls: disable double-tap-to-zoom and guarantee a 44×44 touch target. */
+button {
+  touch-action: manipulation;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 code,

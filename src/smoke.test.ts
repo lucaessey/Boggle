@@ -10,8 +10,8 @@ describe('vitest setup', () => {
   })
 
   it('loads balance.json with the core constants', () => {
-    expect(balance.gridSize).toBe(4)
     expect(balance.minWordLength).toBe(3)
     expect(balance.maxPlayers).toBe(6)
+    expect(Object.keys(balance.sizes).sort()).toEqual(['4', '6', '7'])
   })
 })

@@ -2,11 +2,10 @@
  * Dev demo: solve 10 boards and print a summary for each.
  * Run with: npm run solve:demo
  */
-import balance from '../src/balance.json'
-import { generateBoard } from '../src/core/board/board'
+import { generateBoard } from '../src/core/board/generate'
 import { solveBoard } from '../src/core/dictionary/solver'
 
-const SIZE = balance.gridSize
+const SIZE = Number(process.argv[2] ?? 4) // board size, default 4x4
 const BOARD_COUNT = 10
 
 function gridString(faces: string[]): string {
@@ -19,7 +18,7 @@ function gridString(faces: string[]): string {
 }
 
 for (let seed = 1; seed <= BOARD_COUNT; seed++) {
-  const board = generateBoard(seed)
+  const board = generateBoard(SIZE, seed)
   const faces = board.cells.map((c) => c.face)
   const words = [...solveBoard(board).keys()]
 
