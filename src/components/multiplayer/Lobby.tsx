@@ -2,6 +2,7 @@ import { useState } from 'react'
 import balance from '../../balance.json'
 import { startRound, updateSettings } from '../../net/room'
 import type { RoomState } from '../../net/roomTypes'
+import { useScreenBackground } from '../Background'
 
 const SIZES = Object.keys(balance.sizes).map(Number).sort((a, b) => a - b)
 const LENGTHS: number[] = [...balance.roundLengths].sort((a, b) => a - b)
@@ -24,6 +25,7 @@ interface LobbyProps {
 }
 
 export function Lobby({ code, uid, isHost, room, onLeave }: LobbyProps) {
+  useScreenBackground('1') // lobby uses background_1
   const [copied, setCopied] = useState(false)
   const players = Object.entries(room.players ?? {})
   const playerCount = players.length

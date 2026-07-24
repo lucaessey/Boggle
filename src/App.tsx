@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { AchievementsProvider } from './components/AchievementsContext'
+import { BackgroundProvider } from './components/Background'
 import { AchievementsScreen } from './components/AchievementsScreen'
 import type { GameConfig } from './components/gameConfig'
 import { HighScoresScreen } from './components/HighScoresScreen'
@@ -75,12 +76,14 @@ function App() {
   const showTitle = config === null && !showAchievements && !showHighScores && !showMultiplayer
 
   return (
-    <AchievementsProvider>
-      <main className={`app${showTitle ? '' : ' compact'}`}>
-        {showTitle && <h1>Boggle</h1>}
-        {content()}
-      </main>
-    </AchievementsProvider>
+    <BackgroundProvider>
+      <AchievementsProvider>
+        <main className={`app${showTitle ? '' : ' compact'}`}>
+          {showTitle && <h1>Boggle</h1>}
+          {content()}
+        </main>
+      </AchievementsProvider>
+    </BackgroundProvider>
   )
 }
 

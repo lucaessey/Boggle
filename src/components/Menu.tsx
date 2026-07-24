@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import balance from '../balance.json'
 import type { GameConfig } from './gameConfig'
+import { useScreenBackground } from './Background'
 import { HighScoresButton } from './HighScoresButton'
 import { loadPrefs, saveLength, savePeacefulGoal, saveSize } from './prefs'
 import { TrophyButton } from './TrophyButton'
@@ -39,6 +40,8 @@ export function Menu({
   const [size, setSize] = useState<number>(
     prefs.size && SIZES.includes(prefs.size) ? prefs.size : SIZES[0],
   )
+  // The round-length selector uses background_1; other menu steps use background_2.
+  useScreenBackground(step === 'length' ? '1' : '2')
 
   function chooseSize(s: number) {
     setSize(s)

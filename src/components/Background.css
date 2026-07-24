@@ -1,0 +1,29 @@
+:root {
+  /* Tune this to taste — higher = darker/lighter scrim, more contrast over the image. */
+  --scrim-opacity: 0.62;
+  --scrim-color: 255, 255, 255; /* light theme: whiten the image */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --scrim-color: 12, 13, 17; /* dark theme: darken the image */
+  }
+}
+
+/* Fixed background layer (NOT background-attachment: fixed). */
+.screen-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Semi-transparent scrim so text/tiles stay legible over any part of the image. */
+.screen-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(var(--scrim-color), var(--scrim-opacity));
+}

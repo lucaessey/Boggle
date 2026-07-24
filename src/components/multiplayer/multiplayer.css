@@ -224,3 +224,94 @@
   color: #35c46a;
   font-weight: 800;
 }
+
+/* Tappable leaderboard rows open a player's detail view. */
+.leaderboard.tappable li {
+  padding: 0;
+}
+
+.leaderboard.tappable li button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.35rem 0.6rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lb-chevron {
+  opacity: 0.5;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.lb-hint {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  margin: 0.3rem 0 0;
+  text-align: center;
+}
+
+.mp-detail-heading {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+/* Longest-word reveal (multiplayer): board vs anyone-found. */
+.longest-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+}
+
+.longest-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.longest-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.longest-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.longest-word {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.finder {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+/* Marker on a missed word that another player did find. */
+.beaten-tag {
+  color: #e0a83a;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
