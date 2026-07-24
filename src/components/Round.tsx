@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { generateBoard } from '../core/board/generate'
 import { solveBoard } from '../core/dictionary/solver'
+import { isStraightLine } from '../core/path/path'
+import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
 import { Countdown } from './Countdown'
 import { Results } from './Results'
 import { useGamePlay } from './useGamePlay'
 import './Round.css'
+
+const REJECT_OUTCOMES = new Set(['too-short', 'not-a-word', 'not-on-board'])
 
 type Status = 'countdown' | 'running' | 'over'
 
@@ -28,6 +32,7 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
   const [remaining, setRemaining] = useState(roundSeconds)
   const [totalWords, setTotalWords] = useState(0)
   const game = useGamePlay(board)
+  const ach = useAchievements()
 
   // Countdown while running; the timer only ticks once play has begun.
   useEffect(() => {
@@ -40,12 +45,14 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     if (status === 'running' && remaining <= 0) {
       setTotalWords(solveBoard(board).size)
       setStatus('over')
+      ach.record({ type: 'round-ended', size, length: roundSeconds, mode: 'timed', at: Date.now() })
     }
-  }, [status, remaining, board])
+  }, [status, remaining, board, ach, size, roundSeconds])
 
   function beginPlay() {
     game.reset()
     setRemaining(roundSeconds)
+    ach.startRound(Date.now()) // round timing starts at countdown end
     setStatus('running') // timer starts now, not when the board was generated
   }
 
@@ -56,9 +63,20 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     setStatus('countdown') // fresh countdown
   }
 
-  function handleWord(word: string) {
+  function handleWord(word: string, path: number[] | null) {
     if (status !== 'running') return
-    game.submit(word)
+    const { outcome, points } = game.submit(word)
+    if (outcome === 'accepted') {
+      ach.record({
+        type: 'accepted',
+        word,
+        points,
+        straightLine: path !== null && isStraightLine(path, size),
+        at: Date.now(),
+      })
+    } else if (REJECT_OUTCOMES.has(outcome)) {
+      ach.record({ type: 'rejected', at: Date.now() })
+    }
   }
 
   if (status === 'over') {

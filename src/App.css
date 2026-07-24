@@ -1,4 +1,5 @@
 .app {
+  position: relative; /* anchor for the top-left trophy button */
   min-height: 100dvh;
   display: flex;
   flex-direction: column;

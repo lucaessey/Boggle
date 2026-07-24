@@ -5,6 +5,7 @@ import {
   extendPath,
   extendPathThroughSegment,
   hitTest,
+  isStraightLine,
   pathWord,
   type Point,
 } from './path'
@@ -136,5 +137,23 @@ describe('fast-swipe interpolation', () => {
     expect(crossedTiles(c[0], c[1], c, RADIUS, STEP)).toEqual([1])
     // ...and because tile 1 is not adjacent to tile 0, it is rejected — not bridged.
     expect(extendPathThroughSegment([0], c[0], c[1], c, RADIUS, STEP, notAdjacent)).toEqual([0])
+  })
+})
+
+describe('isStraightLine (7x7)', () => {
+  it('accepts straight horizontal, vertical, and diagonal paths', () => {
+    expect(isStraightLine([0, 1, 2, 3], 7)).toBe(true) // horizontal
+    expect(isStraightLine([0, 7, 14, 21], 7)).toBe(true) // vertical
+    expect(isStraightLine([0, 8, 16, 24], 7)).toBe(true) // diagonal
+  })
+
+  it('rejects a 4-cell path that changes direction', () => {
+    // 0→1→2 is horizontal, then 2→9 turns downward.
+    expect(isStraightLine([0, 1, 2, 9], 7)).toBe(false)
+  })
+
+  it('rejects a path shorter than two cells', () => {
+    expect(isStraightLine([5], 7)).toBe(false)
+    expect(isStraightLine([], 7)).toBe(false)
   })
 })

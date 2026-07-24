@@ -1,20 +1,31 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
+import { AchievementsProvider } from './AchievementsContext'
 import { Round } from './Round'
 
 // COUNTDOWN_SECONDS = 3, GO flash = 550ms (see Countdown.tsx / balance.json).
 const COUNTDOWN_MS = 3000 + 600
 
+const renderRound = (props: { size: number; roundSeconds: number }) =>
+  render(
+    <AchievementsProvider>
+      <Round {...props} onChangeSettings={() => {}} />
+    </AchievementsProvider>,
+  )
+
 describe('Round countdown', () => {
-  beforeEach(() => vi.useFakeTimers())
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers()
+  })
   afterEach(() => {
     cleanup()
     vi.useRealTimers()
   })
 
   it('blocks input during the countdown and starts the timer only at zero', () => {
-    const { container } = render(<Round size={4} roundSeconds={90} onChangeSettings={() => {}} />)
+    const { container } = renderRound({ size: 4, roundSeconds: 90 })
     const grid = () => container.querySelector('.grid')!
     const timer = () => container.querySelector('.timer')!.textContent
 
@@ -52,7 +63,7 @@ describe('Round countdown', () => {
   })
 
   it('total countdown wait is roughly the configured duration', () => {
-    render(<Round size={4} roundSeconds={60} onChangeSettings={() => {}} />)
+    renderRound({ size: 4, roundSeconds: 60 })
     // Not yet started just before the flash completes.
     act(() => vi.advanceTimersByTime(COUNTDOWN_MS - 200))
     // Timer only starts after the full countdown; give it the remainder + 1s.

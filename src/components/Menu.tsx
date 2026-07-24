@@ -2,6 +2,7 @@ import { useState } from 'react'
 import balance from '../balance.json'
 import type { GameConfig } from './gameConfig'
 import { loadPrefs, saveLength, savePeacefulGoal, saveSize } from './prefs'
+import { TrophyButton } from './TrophyButton'
 import './Menu.css'
 
 const SIZES = Object.keys(balance.sizes).map(Number).sort((a, b) => a - b)
@@ -16,6 +17,7 @@ function formatTime(seconds: number): string {
 
 interface MenuProps {
   onStart: (config: GameConfig) => void
+  onOpenAchievements: () => void
 }
 
 /**
@@ -23,7 +25,7 @@ interface MenuProps {
  * (Peaceful only) goal percentage → start. Back returns to the previous step;
  * last-used choices are remembered and preselected.
  */
-export function Menu({ onStart }: MenuProps) {
+export function Menu({ onStart, onOpenAchievements }: MenuProps) {
   const prefs = loadPrefs()
   const [step, setStep] = useState<'size' | 'length' | 'goal'>('size')
   const [size, setSize] = useState<number>(
@@ -49,6 +51,7 @@ export function Menu({ onStart }: MenuProps) {
   if (step === 'size') {
     return (
       <div className="menu">
+        <TrophyButton onOpen={onOpenAchievements} />
         <h2>Board size</h2>
         <div className="menu-options sizes">
           {SIZES.map((s) => (

@@ -56,7 +56,8 @@ const Tile = memo(function Tile({
 
 interface BoardTraceProps {
   board: Board
-  onWord?: (word: string) => void
+  /** Submitted word (uppercased) and the cell path it used (null if typed with no board path). */
+  onWord?: (word: string, path: number[] | null) => void
   /** When true, both input methods are live; when false, all input is ignored. */
   active?: boolean
   /** When false, tiles are shown face-down (letters hidden) without relayout. */
@@ -107,8 +108,8 @@ export function BoardTrace({
     tileRefs.current[index] = el
   }, [])
 
-  function submit(word: string) {
-    onWordRef.current?.(word)
+  function submit(word: string, path: number[] | null) {
+    onWordRef.current?.(word, path)
     apply({ mode: 'idle' })
   }
 
@@ -146,7 +147,7 @@ export function BoardTrace({
     }
     const submitTyped = () => {
       const cur = inputRef.current
-      if (cur.mode === 'type' && cur.typed.length > 0) submit(cur.typed.toUpperCase())
+      if (cur.mode === 'type' && cur.typed.length > 0) submit(cur.typed.toUpperCase(), cur.path)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
@@ -280,8 +281,9 @@ export function BoardTrace({
     processRef.current() // flush any buffered coalesced samples
     releaseCapture(e.pointerId)
     const cur = inputRef.current
-    if (cur.mode === 'drag' && cur.path.length > 0) submit(pathWord(faces, cur.path).toUpperCase())
-    else apply({ mode: 'idle' })
+    if (cur.mode === 'drag' && cur.path.length > 0) {
+      submit(pathWord(faces, cur.path).toUpperCase(), cur.path)
+    } else apply({ mode: 'idle' })
   }
 
   // A cancelled pointer clears the path WITHOUT submitting.

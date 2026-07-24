@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AchievementsProvider } from './components/AchievementsContext'
+import { AchievementsScreen } from './components/AchievementsScreen'
 import type { GameConfig } from './components/gameConfig'
 import { Menu } from './components/Menu'
 import { PeacefulRound } from './components/PeacefulRound'
@@ -7,11 +9,15 @@ import './App.css'
 
 function App() {
   const [config, setConfig] = useState<GameConfig | null>(null)
+  const [showAchievements, setShowAchievements] = useState(false)
 
   function content() {
-    if (config === null) return <Menu onStart={setConfig} />
+    if (showAchievements) return <AchievementsScreen onBack={() => setShowAchievements(false)} />
 
-    // Remount on a settings change so the round resets cleanly.
+    if (config === null) {
+      return <Menu onStart={setConfig} onOpenAchievements={() => setShowAchievements(true)} />
+    }
+
     const key =
       config.mode === 'timed'
         ? `t-${config.size}-${config.length}`
@@ -34,10 +40,12 @@ function App() {
   }
 
   return (
-    <main className="app">
-      <h1>Boggle</h1>
-      {content()}
-    </main>
+    <AchievementsProvider>
+      <main className="app">
+        <h1>Boggle</h1>
+        {content()}
+      </main>
+    </AchievementsProvider>
   )
 }
 

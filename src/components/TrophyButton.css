@@ -1,0 +1,27 @@
+.trophy-button {
+  position: absolute;
+  top: calc(0.5rem + env(safe-area-inset-top));
+  left: calc(0.5rem + env(safe-area-inset-left));
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border, #2e303a);
+  border-radius: 12px;
+  background: var(--social-bg, rgba(128, 128, 128, 0.12));
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.trophy-button:hover {
+  filter: brightness(1.1);
+}
+
+.trophy-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

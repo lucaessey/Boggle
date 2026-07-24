@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-07-23
+goal: A tunable, unit-tested achievements system with non-blocking toasts and an
+  achievements screen.

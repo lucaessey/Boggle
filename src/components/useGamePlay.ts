@@ -41,7 +41,7 @@ export function useGamePlay(board: Board) {
   const foundSet = useRef<Set<string>>(new Set())
   const foundCount = useRef(0)
 
-  function submit(word: string): SubmissionOutcome {
+  function submit(word: string): { outcome: SubmissionOutcome; points: number } {
     const outcome = classifySubmission(word, foundSet.current, {
       minWordLength: MIN_WORD_LENGTH,
       isValid: isValidWord,
@@ -56,7 +56,7 @@ export function useGamePlay(board: Board) {
       hapticAccept()
     }
     setFeedback({ outcome, message: FEEDBACK_MESSAGES[outcome](word, points) })
-    return outcome
+    return { outcome, points }
   }
 
   function reset() {

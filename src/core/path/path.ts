@@ -78,6 +78,26 @@ export function pathWord(faces: readonly string[], state: PathState): string {
 }
 
 /**
+ * True if the path is a single straight line — every step uses the same
+ * (row, col) direction vector. Requires at least two cells. A path that changes
+ * direction (turns) is not straight.
+ */
+export function isStraightLine(path: PathState, size: number): boolean {
+  if (path.length < 2) return false
+  const rc = (i: number) => ({ r: Math.floor(i / size), c: i % size })
+  const first = rc(path[1])
+  const zero = rc(path[0])
+  const dr = first.r - zero.r
+  const dc = first.c - zero.c
+  for (let i = 2; i < path.length; i++) {
+    const a = rc(path[i - 1])
+    const b = rc(path[i])
+    if (b.r - a.r !== dr || b.c - a.c !== dc) return false
+  }
+  return true
+}
+
+/**
  * Tiles crossed by the line segment from `from` to `to`, in order, with
  * consecutive duplicates removed. The segment is sampled at intervals no larger
  * than `step` (use half a tile width) and each sample is hit-tested against the

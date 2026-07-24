@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { generateBoard } from '../core/board/generate'
+import { isStraightLine } from '../core/path/path'
 import { goalCount as computeGoal, hasReachedGoal } from '../core/round/peaceful'
+import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
 import { Countdown } from './Countdown'
 import { Results } from './Results'
@@ -9,6 +11,8 @@ import { solveBoardAsync } from './solveAsync'
 import { useGamePlay } from './useGamePlay'
 import './Round.css'
 import './Peaceful.css'
+
+const REJECT_OUTCOMES = new Set(['too-short', 'not-a-word', 'not-on-board'])
 
 type Phase = 'countdown' | 'loading' | 'playing' | 'over' | 'won'
 
@@ -45,9 +49,20 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
   const [phase, setPhase] = useState<Phase>('countdown')
   const [totalWords, setTotalWords] = useState(0)
   const game = useGamePlay(board)
+  const ach = useAchievements()
 
   const solveDone = useRef(false)
   const countdownDone = useRef(false)
+
+  // The round's timing starts when play actually begins (board revealed).
+  useEffect(() => {
+    if (phase === 'playing') ach.startRound(Date.now())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase])
+
+  function endRound() {
+    ach.record({ type: 'round-ended', size, length: null, mode: 'peaceful', at: Date.now() })
+  }
 
   // Start the solve as soon as the board exists; countdown runs concurrently.
   useEffect(() => {
@@ -73,12 +88,23 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
 
   const goal = computeGoal(totalWords, goalPercentage)
 
-  function handleWord(word: string) {
+  function handleWord(word: string, path: number[] | null) {
     if (phase !== 'playing') return
-    if (game.submit(word) === 'accepted') {
+    const { outcome, points } = game.submit(word)
+    if (outcome === 'accepted') {
+      ach.record({
+        type: 'accepted',
+        word,
+        points,
+        straightLine: path !== null && isStraightLine(path, size),
+        at: Date.now(),
+      })
       if (hasReachedGoal(game.foundCount.current, computeGoal(totalWords, goalPercentage))) {
+        endRound() // a win is a finished round
         setPhase('won')
       }
+    } else if (REJECT_OUTCOMES.has(outcome)) {
+      ach.record({ type: 'rejected', at: Date.now() })
     }
   }
 
@@ -142,7 +168,15 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
       </div>
 
       <div className="idle-controls">
-        <button type="button" className="secondary" onClick={() => setPhase('over')} disabled={counting}>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => {
+            endRound()
+            setPhase('over')
+          }}
+          disabled={counting}
+        >
           End Round
         </button>
         <button type="button" className="back" onClick={onChangeSettings}>

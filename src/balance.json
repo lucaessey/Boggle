@@ -6,6 +6,18 @@
   "countdownSeconds": 3,
   "roundLengths": [60, 90, 120, 180, 240, 300],
   "peaceful": { "goalPercentages": [25, 50, 75, 100], "winScreenSeconds": 5 },
+  "achievements": {
+    "firstBloodSeconds": 5,
+    "centuryScore": 100,
+    "longHaulLength": 8,
+    "perfectionistMinWords": 5,
+    "scattershotInvalid": 20,
+    "rapidFireCount": 5,
+    "rapidFireWindowSeconds": 10,
+    "palindromeMinLength": 3,
+    "straightShooterMinLength": 4,
+    "wordCollectorThresholds": [100, 200, 300, 400, 500]
+  },
   "vowels": ["A", "E", "I", "O", "U"],
   "haptics": { "enabled": true, "selectMs": 8, "acceptMs": 25 },
   "scoring": { "minLength": 3, "basePoints": 1, "pointsPerExtraLetter": 1 },
