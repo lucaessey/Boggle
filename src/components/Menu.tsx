@@ -20,6 +20,7 @@ interface MenuProps {
   onStart: (config: GameConfig) => void
   onOpenAchievements: () => void
   onOpenHighScores: () => void
+  onOpenMultiplayer: () => void
 }
 
 /**
@@ -27,7 +28,12 @@ interface MenuProps {
  * (Peaceful only) goal percentage → start. Back returns to the previous step;
  * last-used choices are remembered and preselected.
  */
-export function Menu({ onStart, onOpenAchievements, onOpenHighScores }: MenuProps) {
+export function Menu({
+  onStart,
+  onOpenAchievements,
+  onOpenHighScores,
+  onOpenMultiplayer,
+}: MenuProps) {
   const prefs = loadPrefs()
   const [step, setStep] = useState<'size' | 'length' | 'goal'>('size')
   const [size, setSize] = useState<number>(
@@ -68,6 +74,9 @@ export function Menu({ onStart, onOpenAchievements, onOpenHighScores }: MenuProp
             </button>
           ))}
         </div>
+        <button type="button" className="menu-button multiplayer-option" onClick={onOpenMultiplayer}>
+          🌐 Multiplayer
+        </button>
       </div>
     )
   }

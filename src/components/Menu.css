@@ -42,6 +42,13 @@
   border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
+/* Multiplayer entry on the main menu. */
+.multiplayer-option {
+  width: 100%;
+  background: linear-gradient(135deg, #7a4bd0, #a06bff);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
 .menu-button {
   padding: 1rem;
   font-size: 1.15rem;

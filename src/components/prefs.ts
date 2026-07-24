@@ -5,6 +5,23 @@
 const SIZE_KEY = 'boggle.size'
 const LENGTH_KEY = 'boggle.length'
 const GOAL_KEY = 'boggle.peacefulGoal'
+const NICKNAME_KEY = 'boggle.nickname'
+
+export function loadNickname(): string {
+  try {
+    return localStorage.getItem(NICKNAME_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveNickname(name: string): void {
+  try {
+    localStorage.setItem(NICKNAME_KEY, name)
+  } catch {
+    // ignore
+  }
+}
 
 export interface Prefs {
   size: number | null
