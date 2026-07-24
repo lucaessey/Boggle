@@ -31,7 +31,7 @@ describe('Round countdown', () => {
 
     // During the countdown: board input disabled, letters hidden, timer full.
     expect(grid().classList.contains('disabled')).toBe(true)
-    expect(container.querySelector('.tile')!.classList.contains('facedown')).toBe(true)
+    expect(container.querySelector('.tile-face')!.classList.contains('facedown')).toBe(true)
     expect(container.querySelector('.countdown')).not.toBeNull()
     expect(timer()).toBe('1:30')
 
@@ -52,7 +52,7 @@ describe('Round countdown', () => {
       vi.advanceTimersByTime(700)
     })
     expect(grid().classList.contains('disabled')).toBe(false)
-    expect(container.querySelector('.tile')!.classList.contains('facedown')).toBe(false)
+    expect(container.querySelector('.tile-face')!.classList.contains('facedown')).toBe(false)
     expect(container.querySelector('.countdown')).toBeNull()
 
     // Now the timer ticks: after 2s it reads 1:28.

@@ -62,60 +62,94 @@
   gap: 0.22rem;
 }
 
+/* ---- Physical keycap tiles ------------------------------------------------
+   The depth cue is a HARD-EDGED SOLID LIP beneath the face (0-blur box-shadow),
+   not a blurred drop shadow. Per-size CSS variables scale the lip, border, and
+   press depth with the tile so a 4x4 lip doesn't look absurd at 7x7. box-shadow
+   + transform only (no filter/backdrop-filter/3D transforms). */
+.grid {
+  --lip-h: 7px; /* side-wall thickness (default: 4x4 / 5x5) */
+  --tile-border-w: 2.5px; /* dark outline around the whole extruded shape */
+}
+.grid[data-size='6'] {
+  --lip-h: 5px;
+  --tile-border-w: 2px;
+}
+.grid[data-size='7'] {
+  --lip-h: 4px;
+  --tile-border-w: 1.5px;
+}
+/* Compact board (results screen) sits smaller — thin the depth to match. */
+.grid.compact {
+  --lip-h: 5px;
+  --tile-border-w: 2px;
+}
+
+/* Static outer wrapper: the geometry box used for hit-testing. NEVER
+   transformed. aspect-ratio keeps it square once the letter moves to the
+   absolute inner face. */
 .tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: var(--tile-bg, #2a2a32);
-  color: var(--tile-fg, #f5f5f7);
-  font-weight: 700;
-  /* Font scales to the tile: ~1/size of the grid width. */
-  font-size: clamp(0.85rem, calc(52vw / var(--cols, 4)), 2.25rem);
-  text-transform: uppercase;
+  position: relative;
+  aspect-ratio: 1;
   user-select: none;
   -webkit-user-select: none; /* dragging must not select letters (iOS Safari) */
   -webkit-tap-highlight-color: transparent; /* no grey flash on tap */
-  /* Subtle raised tile: soft outer drop shadow to lift it off the board, plus an
-     inset bevel — light top-left, dark bottom-right — lit from above.
-     box-shadow only (no filter/backdrop-filter/3D transforms) to stay cheap at 7x7. */
+}
+
+/* Inner face: cream keycap top with a subtle top-lit gradient. Carries the
+   press transform and every shadow. Corner radius is ~19% of tile width (a %
+   auto-scales across board sizes). The lip + outline are 0-blur shadows so the
+   tile reads as a solid object with thickness, not a flat sticker. */
+.tile-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 19%;
+  background: linear-gradient(180deg, #fdfbf4 0%, #ece4d2 100%);
+  color: #17150f;
+  font-weight: 800;
+  /* Font scales to the tile: ~1/size of the grid width. */
+  font-size: clamp(0.85rem, calc(52vw / var(--cols, 4)), 2.25rem);
+  text-transform: uppercase;
   box-shadow:
-    0 3px 4px rgba(0, 0, 0, 0.32),
-    inset 1.5px 1.5px 0 rgba(255, 255, 255, 0.2),
-    inset -1.5px -1.5px 0 rgba(0, 0, 0, 0.32);
+    /* solid unblurred side wall (the lip) directly beneath the face */
+    0 var(--lip-h) 0 0 #c8bda0,
+    /* near-black outline wrapping the face */
+    0 0 0 var(--tile-border-w) #17150f,
+    /* near-black outline wrapping the lip's sides + bottom */
+    0 var(--lip-h) 0 var(--tile-border-w) #17150f,
+    /* one very soft ambient shadow to ground the whole tile */
+    0 calc(var(--lip-h) + 2px) 5px 0 rgba(0, 0, 0, 0.28);
   /* Only transform + box-shadow change on press — never anything that reflows. */
   transition: transform 80ms ease, box-shadow 80ms ease, background-color 80ms ease;
 }
 
-.grid[data-size='6'] .tile {
-  border-radius: 9px;
-}
-.grid[data-size='7'] .tile {
-  border-radius: 7px;
-}
-
-/* Pressed-in: nudge down, shrink the outer shadow, and FLIP the bevel so the
-   light edge moves to the bottom-right. Transform + shadow only (no layout). */
-.tile.selected {
+/* Pressed-in: the face translates DOWN by the lip height and the lip collapses
+   to zero by the same amount, so the tile compresses onto its base — the total
+   silhouette height (face bottom + lip) stays constant. Transform + shadow only. */
+.tile-face.selected {
   background: var(--tile-selected-bg, #4f8cff);
   color: #fff;
-  transform: translateY(2px);
+  transform: translateY(var(--lip-h));
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    inset -1.5px -1.5px 0 rgba(255, 255, 255, 0.2),
-    inset 1.5px 1.5px 0 rgba(0, 0, 0, 0.3);
+    0 0 0 0 #c8bda0,
+    0 0 0 var(--tile-border-w) #17150f,
+    0 0 0 var(--tile-border-w) #17150f,
+    0 2px 5px 0 rgba(0, 0, 0, 0.28);
   will-change: transform; /* only on tiles currently in the path */
 }
 
-/* Reduced motion: keep the static bevel, drop the press animation. */
+/* Reduced motion: keep the static 3D look, drop the press transition. */
 @media (prefers-reduced-motion: reduce) {
-  .tile {
+  .tile-face {
     transition: none;
   }
 }
 
-/* Face-down tiles during the countdown: same footprint, no letter. */
-.tile.facedown {
+/* Face-down tiles during the countdown: same footprint + keycap depth, no letter. */
+.tile-face.facedown {
   background: var(--tile-facedown-bg, #23232b);
   color: transparent;
 }

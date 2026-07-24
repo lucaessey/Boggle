@@ -43,13 +43,16 @@ const Tile = memo(function Tile({
   register: (index: number, el: HTMLDivElement | null) => void
 }) {
   const setRef = useCallback((el: HTMLDivElement | null) => register(index, el), [index, register])
+  // Static outer wrapper (never transformed) — carries the ref used for all
+  // geometry and hit-testing. The inner face carries the press transform and
+  // the 3D box-shadows, so pressing never moves the measured element.
   return (
-    <div
-      ref={setRef}
-      className={`tile${selected ? ' selected' : ''}${revealed ? '' : ' facedown'}`}
-      role="gridcell"
-    >
-      {revealed ? face : ''}
+    <div ref={setRef} className="tile" role="gridcell">
+      <div
+        className={`tile-face${selected ? ' selected' : ''}${revealed ? '' : ' facedown'}`}
+      >
+        {revealed ? face : ''}
+      </div>
     </div>
   )
 })
