@@ -113,6 +113,7 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
         found={game.found}
         solve={solve}
         personalBest={personalBest}
+        leaderboard={{ size, seconds: roundSeconds }}
         onPlayAgain={playAgain}
         onChangeSettings={onChangeSettings}
       />

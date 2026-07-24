@@ -6,6 +6,27 @@ const SIZE_KEY = 'boggle.size'
 const LENGTH_KEY = 'boggle.length'
 const GOAL_KEY = 'boggle.peacefulGoal'
 const NICKNAME_KEY = 'boggle.nickname'
+const LB_CONSENT_KEY = 'boggle.leaderboardConsent'
+
+/** Public-leaderboard opt-in: 'yes' submits, 'no' never prompts, null = unasked. */
+export type LeaderboardConsent = 'yes' | 'no'
+
+export function loadLeaderboardConsent(): LeaderboardConsent | null {
+  try {
+    const raw = localStorage.getItem(LB_CONSENT_KEY)
+    return raw === 'yes' || raw === 'no' ? raw : null
+  } catch {
+    return null
+  }
+}
+
+export function saveLeaderboardConsent(value: LeaderboardConsent): void {
+  try {
+    localStorage.setItem(LB_CONSENT_KEY, value)
+  } catch {
+    // ignore: persistence is best-effort
+  }
+}
 
 export function loadNickname(): string {
   try {

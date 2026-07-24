@@ -16,6 +16,29 @@
   margin: 0;
 }
 
+/* Top-level My Scores / Global segmented tabs. */
+.hs-viewtabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.hs-viewtab {
+  min-height: 44px;
+  border: 1px solid var(--border, #2e303a);
+  border-radius: 10px;
+  background: rgba(128, 128, 128, 0.1);
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.hs-viewtab.active {
+  background: var(--tile-selected-bg, #4f8cff);
+  color: #fff;
+  border-color: transparent;
+}
+
 /* Segmented size tabs — a single row, no horizontal scroll on a phone. */
 .hs-tabs {
   display: grid;

@@ -5,6 +5,7 @@ import { byLengthThenAlpha, longestWords, missedWords } from '../core/round/resu
 import { scoreForWord } from '../core/round/scoring'
 import type { HighScoreRecord } from '../core/stats/stats'
 import { BoardTrace } from './BoardTrace'
+import { LeaderboardSubmit } from './leaderboard/LeaderboardSubmit'
 import type { SolveState } from './useBoardSolve'
 import type { FoundWord } from './useGamePlay'
 import './Results.css'
@@ -40,6 +41,11 @@ interface ResultsProps {
   solve: SolveState
   /** Present only when this round set a new personal best (timed mode only). */
   personalBest?: { previous: HighScoreRecord | undefined } | null
+  /**
+   * Solo TIMED rounds only — enables the global-leaderboard opt-in/submit.
+   * Peaceful and multiplayer never pass this, so they never write.
+   */
+  leaderboard?: { size: number; seconds: number } | null
   onPlayAgain: () => void
   onChangeSettings: () => void
 }
@@ -51,6 +57,7 @@ export function Results({
   found,
   solve,
   personalBest,
+  leaderboard,
   onPlayAgain,
   onChangeSettings,
 }: ResultsProps) {
@@ -97,6 +104,15 @@ export function Results({
             : `You found ${found.length} words`}
         </p>
       </div>
+
+      {leaderboard && (
+        <LeaderboardSubmit
+          size={leaderboard.size}
+          seconds={leaderboard.seconds}
+          score={score}
+          words={found.length}
+        />
+      )}
 
       <BoardTrace
         board={board}

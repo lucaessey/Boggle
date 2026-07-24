@@ -1,8 +1,14 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import balance from '../balance.json'
 import { getHighScore } from '../core/stats/highScores'
 import { useAchievements } from './AchievementsContext'
 import './HighScoresScreen.css'
+
+// Code-split: the global leaderboard (and Firebase) load only when the Global
+// tab is opened. "My Scores" stays fully offline.
+const GlobalLeaderboard = lazy(() =>
+  import('./leaderboard/GlobalLeaderboard').then((m) => ({ default: m.GlobalLeaderboard })),
+)
 
 const SIZES = Object.keys(balance.sizes).map(Number).sort((a, b) => a - b)
 const LENGTHS: number[] = [...balance.roundLengths].sort((a, b) => a - b)
@@ -27,9 +33,12 @@ function formatDate(iso: string): string {
   }
 }
 
+type View = 'my' | 'global'
+
 export function HighScoresScreen({ onBack }: { onBack: () => void }) {
   const { stats, resetHighScores } = useAchievements()
   const scores = stats.lifetime.highScores
+  const [view, setView] = useState<View>('my')
   const [size, setSize] = useState(sessionSize)
   const [confirming, setConfirming] = useState(false)
 
@@ -47,6 +56,69 @@ export function HighScoresScreen({ onBack }: { onBack: () => void }) {
         <h2>High Scores</h2>
       </header>
 
+      <div className="hs-viewtabs" role="tablist" aria-label="Leaderboard">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'my'}
+          className={`hs-viewtab${view === 'my' ? ' active' : ''}`}
+          onClick={() => setView('my')}
+        >
+          My Scores
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'global'}
+          className={`hs-viewtab${view === 'global' ? ' active' : ''}`}
+          onClick={() => setView('global')}
+        >
+          Global
+        </button>
+      </div>
+
+      {view === 'global' ? (
+        <Suspense
+          fallback={
+            <div className="lb-state">
+              <div className="mini-spinner" aria-hidden="true" />
+              <span>Loading…</span>
+            </div>
+          }
+        >
+          <GlobalLeaderboard />
+        </Suspense>
+      ) : (
+        <MyScores
+          scores={scores}
+          size={size}
+          chooseSize={chooseSize}
+          confirming={confirming}
+          setConfirming={setConfirming}
+          resetHighScores={resetHighScores}
+        />
+      )}
+    </div>
+  )
+}
+
+function MyScores({
+  scores,
+  size,
+  chooseSize,
+  confirming,
+  setConfirming,
+  resetHighScores,
+}: {
+  scores: Parameters<typeof getHighScore>[0]
+  size: number
+  chooseSize: (s: number) => void
+  confirming: boolean
+  setConfirming: (v: boolean) => void
+  resetHighScores: () => void
+}) {
+  return (
+    <>
       <div className="hs-tabs" role="tablist" aria-label="Board size">
         {SIZES.map((s) => (
           <button
@@ -112,6 +184,6 @@ export function HighScoresScreen({ onBack }: { onBack: () => void }) {
           </button>
         )}
       </div>
-    </div>
+    </>
   )
 }
