@@ -3,18 +3,15 @@ import balance from '../balance.json'
 import type { Board } from '../core/board/types'
 import { byLengthThenAlpha, longestWords, missedWords } from '../core/round/results'
 import { scoreForWord } from '../core/round/scoring'
+import type { HighScoreRecord } from '../core/stats/stats'
 import { BoardTrace } from './BoardTrace'
+import type { SolveState } from './useBoardSolve'
 import type { FoundWord } from './useGamePlay'
 import './Results.css'
 
 const MISSED_CAP = balance.missedWordsDisplayCap
 
-/** Post-round solve status for the reveal options. */
-export type SolveState =
-  | { status: 'idle' }
-  | { status: 'solving' }
-  | { status: 'ready'; total: number; paths: Map<string, number[]> }
-  | { status: 'failed' }
+export type { SolveState }
 
 interface WordRowProps {
   word: string
@@ -41,6 +38,8 @@ interface ResultsProps {
   score: number
   found: FoundWord[]
   solve: SolveState
+  /** Present only when this round set a new personal best (timed mode only). */
+  personalBest?: { previous: HighScoreRecord | undefined } | null
   onPlayAgain: () => void
   onChangeSettings: () => void
 }
@@ -51,6 +50,7 @@ export function Results({
   score,
   found,
   solve,
+  personalBest,
   onPlayAgain,
   onChangeSettings,
 }: ResultsProps) {
@@ -77,6 +77,17 @@ export function Results({
 
   return (
     <div className="results-screen">
+      {personalBest && (
+        <div className="pb-banner" role="status">
+          <span className="pb-title">🏅 NEW PERSONAL BEST</span>
+          <span className="pb-prev">
+            {personalBest.previous
+              ? `Previous best: ${personalBest.previous.score}`
+              : 'First score for this board'}
+          </span>
+        </div>
+      )}
+
       <div className="results-summary">
         <h2>{heading}</h2>
         <p className="final-score">Final score: {score}</p>
@@ -115,7 +126,11 @@ export function Results({
           </ul>
         </section>
 
-        {/* Reveal options are hidden entirely if the solve failed. */}
+        {/* If the solve failed/timed out, hide the reveal buttons and say so. */}
+        {solve.status === 'failed' && (
+          <p className="solve-failed">Couldn't load the full word list</p>
+        )}
+
         {solve.status !== 'failed' && (
           <div className="reveal">
             <button

@@ -18,6 +18,7 @@ export function loadLifetime(): LifetimeStats {
         sizesPlayed: parsed.sizesPlayed ?? [],
         lengthsPlayed: parsed.lengthsPlayed ?? [],
         unlocked: parsed.unlocked ?? {},
+        highScores: parsed.highScores ?? {},
       }
     }
   } catch {

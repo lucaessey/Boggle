@@ -5,9 +5,9 @@ import { goalCount as computeGoal, hasReachedGoal } from '../core/round/peaceful
 import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
 import { Countdown } from './Countdown'
-import { Results, type SolveState } from './Results'
+import { Results } from './Results'
+import { useBoardSolve } from './useBoardSolve'
 import { WinScreen } from './WinScreen'
-import { solveBoardAsync } from './solveAsync'
 import { useGamePlay } from './useGamePlay'
 import './Round.css'
 import './Peaceful.css'
@@ -47,13 +47,15 @@ function ProgressBar({ found, total, goal }: { found: number; total: number; goa
 export function PeacefulRound({ size, goalPercentage, onChangeSettings }: PeacefulRoundProps) {
   const [board, setBoard] = useState(() => generateBoard(size))
   const [phase, setPhase] = useState<Phase>('countdown')
-  const [totalWords, setTotalWords] = useState(0)
-  // The Peaceful solve done up front is reused by the results screen — no re-solve.
-  const [solve, setSolve] = useState<SolveState>({ status: 'solving' })
   const game = useGamePlay(board)
   const ach = useAchievements()
 
-  const solveDone = useRef(false)
+  // Solve as soon as the board exists (concurrent with the countdown); the
+  // result is reused by the results screen. Always resolves (ready or failed).
+  const solve = useBoardSolve(board, true)
+  const solveReady = solve.status === 'ready' || solve.status === 'failed'
+  const totalWords = solve.status === 'ready' ? solve.total : 0
+
   const countdownDone = useRef(false)
 
   // The round's timing starts when play actually begins (board revealed).
@@ -66,37 +68,21 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
     ach.record({ type: 'round-ended', size, length: null, mode: 'peaceful', at: Date.now() })
   }
 
-  // Start the solve as soon as the board exists; countdown runs concurrently.
-  // The full result is kept for the results screen (reused, not re-solved).
+  // A fresh board restarts the countdown.
   useEffect(() => {
-    solveDone.current = false
     countdownDone.current = false
     setPhase('countdown')
-    setSolve({ status: 'solving' })
-    let cancelled = false
-    solveBoardAsync(board)
-      .then((r) => {
-        if (cancelled) return
-        setTotalWords(r.total)
-        setSolve({ status: 'ready', total: r.total, paths: new Map(r.entries) })
-        solveDone.current = true
-        if (countdownDone.current) setPhase('playing')
-      })
-      .catch(() => {
-        if (cancelled) return
-        // Solve failed: let play proceed (goal falls back to 0) with no reveals.
-        setSolve({ status: 'failed' })
-        solveDone.current = true
-        if (countdownDone.current) setPhase('playing')
-      })
-    return () => {
-      cancelled = true
-    }
   }, [board])
+
+  // If the countdown finished first and we're holding on loading, start play the
+  // moment the solve resolves.
+  useEffect(() => {
+    if (phase === 'loading' && solveReady) setPhase('playing')
+  }, [phase, solveReady])
 
   function onCountdownDone() {
     countdownDone.current = true
-    setPhase(solveDone.current ? 'playing' : 'loading') // hold on loading if solve is slow
+    setPhase(solveReady ? 'playing' : 'loading') // hold on loading if solve is slow
   }
 
   const goal = computeGoal(totalWords, goalPercentage)

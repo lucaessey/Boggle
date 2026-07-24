@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react'
 import { generateBoard } from '../core/board/generate'
 import { isStraightLine } from '../core/path/path'
+import type { HighScoreRecord } from '../core/stats/stats'
 import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
 import { Countdown } from './Countdown'
-import { Results, type SolveState } from './Results'
-import { solveBoardAsync } from './solveAsync'
-import { useGamePlay } from './useGamePlay'
+import { Results } from './Results'
+import { useBoardSolve } from './useBoardSolve'
+import { type FoundWord, useGamePlay } from './useGamePlay'
 import './Round.css'
+
+/** Longest found word (alphabetical tie-break), or '' if none. */
+function longestFound(found: FoundWord[]): string {
+  return (
+    [...found]
+      .map((f) => f.word)
+      .sort((a, b) => b.length - a.length || a.localeCompare(b))[0] ?? ''
+  )
+}
 
 const REJECT_OUTCOMES = new Set(['too-short', 'not-a-word', 'not-on-board'])
 
@@ -30,9 +40,14 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
   const [board, setBoard] = useState(() => generateBoard(size))
   const [status, setStatus] = useState<Status>('countdown')
   const [remaining, setRemaining] = useState(roundSeconds)
-  const [solve, setSolve] = useState<SolveState>({ status: 'idle' })
   const game = useGamePlay(board)
   const ach = useAchievements()
+  // Solve the board off the main thread once the round is over (for reveals).
+  const solve = useBoardSolve(board, status === 'over')
+  // Set when this round beat the record for this size+length (banner on results).
+  const [personalBest, setPersonalBest] = useState<{ previous: HighScoreRecord | undefined } | null>(
+    null,
+  )
 
   // Countdown while running; the timer only ticks once play has begun.
   useEffect(() => {
@@ -45,26 +60,18 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     if (status === 'running' && remaining <= 0) {
       setStatus('over')
       ach.record({ type: 'round-ended', size, length: roundSeconds, mode: 'timed', at: Date.now() })
-    }
-  }, [status, remaining, ach, size, roundSeconds])
-
-  // On round end, solve the board off the main thread for the reveal options —
-  // render the results screen immediately, don't block on it.
-  useEffect(() => {
-    if (status !== 'over' || solve.status !== 'idle') return
-    setSolve({ status: 'solving' })
-    let cancelled = false
-    solveBoardAsync(board)
-      .then((r) => {
-        if (!cancelled) setSolve({ status: 'ready', total: r.total, paths: new Map(r.entries) })
+      // High score: read the previous best, then write if strictly higher, and
+      // capture the previous value for the banner — all before results render.
+      const hs = ach.recordHighScore(size, roundSeconds, {
+        score: game.score,
+        wordsFound: game.found.length,
+        longestWord: longestFound(game.found),
+        date: new Date(Date.now()).toISOString(),
       })
-      .catch(() => {
-        if (!cancelled) setSolve({ status: 'failed' })
-      })
-    return () => {
-      cancelled = true
+      setPersonalBest(hs.isNewBest ? { previous: hs.previous } : null)
     }
-  }, [status, board, solve.status])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, remaining, size, roundSeconds])
 
   function beginPlay() {
     game.reset()
@@ -77,8 +84,8 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     game.reset()
     setBoard(generateBoard(size))
     setRemaining(roundSeconds)
-    setSolve({ status: 'idle' })
-    setStatus('countdown') // fresh countdown
+    setPersonalBest(null)
+    setStatus('countdown') // fresh countdown; the solve resets via useBoardSolve
   }
 
   function handleWord(word: string, path: number[] | null) {
@@ -105,6 +112,7 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
         score={game.score}
         found={game.found}
         solve={solve}
+        personalBest={personalBest}
         onPlayAgain={playAgain}
         onChangeSettings={onChangeSettings}
       />

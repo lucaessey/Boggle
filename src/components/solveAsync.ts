@@ -52,7 +52,12 @@ export function solveBoardAsync(board: Board): Promise<SolveResult> {
           const data = e.data as { total: number; entries: [string, number[]][]; ms: number }
           resolve(log({ ...data, viaWorker: true }))
         }
+        // Both error paths fall back to the main thread rather than hanging.
         worker.onerror = () => {
+          worker.terminate()
+          fallback()
+        }
+        worker.onmessageerror = () => {
           worker.terminate()
           fallback()
         }

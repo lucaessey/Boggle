@@ -8,6 +8,56 @@
   min-height: 0;
 }
 
+/* New personal best banner — celebratory, above the summary. */
+.pb-banner {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e0a83a, #ffcf5a);
+  color: #221a05;
+  box-shadow: 0 4px 16px rgba(224, 168, 58, 0.4);
+  animation: pb-pop 0.4s ease-out;
+}
+
+.pb-title {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.pb-prev {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+@keyframes pb-pop {
+  from {
+    transform: scale(0.85) translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-banner {
+    animation: none;
+  }
+}
+
+.solve-failed {
+  margin: 0.5rem 0;
+  text-align: center;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
 /* Score summary stays pinned/visible while the lists scroll. */
 .results-summary {
   flex: 0 0 auto;

@@ -13,12 +13,22 @@ const A = balance.achievements
 const ALL_SIZES = Object.keys(balance.sizes).map(Number)
 const ALL_LENGTHS: number[] = balance.roundLengths
 
+/** One timed-mode high-score record (Peaceful is never recorded). */
+export interface HighScoreRecord {
+  score: number
+  wordsFound: number
+  longestWord: string
+  date: string // ISO
+}
+
 export interface LifetimeStats {
   totalAcceptedWords: number
   sizesPlayed: number[]
   lengthsPlayed: number[]
   /** achievement id -> ISO unlock date */
   unlocked: Record<string, string>
+  /** "size x length" -> best record (timed rounds only). */
+  highScores: Record<string, HighScoreRecord>
 }
 
 export interface RoundStats {
@@ -36,7 +46,13 @@ export interface Stats {
 }
 
 export function emptyLifetime(): LifetimeStats {
-  return { totalAcceptedWords: 0, sizesPlayed: [], lengthsPlayed: [], unlocked: {} }
+  return {
+    totalAcceptedWords: 0,
+    sizesPlayed: [],
+    lengthsPlayed: [],
+    unlocked: {},
+    highScores: {},
+  }
 }
 
 function emptyRound(startedAt: number | null = null): RoundStats {
