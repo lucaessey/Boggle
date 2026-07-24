@@ -14,6 +14,6 @@ const ctx = self as unknown as {
 ctx.onmessage = (e: MessageEvent) => {
   const board = e.data as Board
   const start = performance.now()
-  const { total, words } = runSolve(board)
-  ctx.postMessage({ total, words, ms: performance.now() - start })
+  const { total, entries } = runSolve(board)
+  ctx.postMessage({ total, entries, ms: performance.now() - start })
 }

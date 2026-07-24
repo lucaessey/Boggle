@@ -1,0 +1,153 @@
+.results-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(94vw, 26rem);
+  height: 100%;
+  min-height: 0;
+}
+
+/* Score summary stays pinned/visible while the lists scroll. */
+.results-summary {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.results-summary h2 {
+  margin: 0;
+}
+
+.final-score {
+  margin: 0.15rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.coverage {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+/* The board (compact) sits above the scrollable lists. */
+.results-screen .board-trace {
+  flex: 0 0 auto;
+}
+
+.results-lists {
+  flex: 1 1 auto;
+  min-height: 0; /* allow the list to shrink and scroll inside the flex column */
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.results-found h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+.word-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.word-row button {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  min-height: 44px; /* touch target */
+  padding: 0 0.6rem;
+  border: none;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.word-row.active button {
+  background: rgba(79, 140, 255, 0.18);
+  border-radius: 8px;
+}
+
+.wr-word {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.wr-len {
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.wr-pts {
+  min-width: 1.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.reveal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--tile-selected-bg, #4f8cff);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reveal-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cap-note {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.mini-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(128, 128, 128, 0.4);
+  border-top-color: var(--tile-selected-bg, #4f8cff);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-spinner {
+    animation-duration: 2s;
+  }
+}
+
+.results-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom);
+}

@@ -39,10 +39,14 @@ function App() {
     )
   }
 
+  // The big title only appears on the main menu; play/results/achievements
+  // screens reclaim that vertical space (and have their own headings).
+  const showTitle = config === null && !showAchievements
+
   return (
     <AchievementsProvider>
-      <main className="app">
-        <h1>Boggle</h1>
+      <main className={`app${showTitle ? '' : ' compact'}`}>
+        {showTitle && <h1>Boggle</h1>}
         {content()}
       </main>
     </AchievementsProvider>

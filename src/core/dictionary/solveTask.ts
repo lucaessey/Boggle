@@ -7,11 +7,12 @@ import { solveBoard } from './solver'
 
 export interface SolveTotals {
   total: number
-  words: string[]
+  /** [word, example path] for every findable word. */
+  entries: [string, number[]][]
 }
 
-/** Full exhaustive solve → total findable word count and the word list. */
+/** Full exhaustive solve → total count and every word with one example path. */
 export function runSolve(board: Board): SolveTotals {
   const result = solveBoard(board)
-  return { total: result.size, words: [...result.keys()] }
+  return { total: result.size, entries: [...result.entries()] }
 }

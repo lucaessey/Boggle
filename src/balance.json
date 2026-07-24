@@ -3,6 +3,8 @@
   "maxWordLength": 16,
   "maxPlayers": 6,
   "maxGenerationAttempts": 50,
+  "minTotalWords": 30,
+  "missedWordsDisplayCap": 100,
   "countdownSeconds": 3,
   "roundLengths": [60, 90, 120, 180, 240, 300],
   "peaceful": { "goalPercentages": [25, 50, 75, 100], "winScreenSeconds": 5 },

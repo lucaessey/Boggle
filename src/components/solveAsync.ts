@@ -1,14 +1,15 @@
 /**
  * Solve a board without blocking the UI: in a Web Worker when available,
  * otherwise on the main thread (same `runSolve`, so results are identical).
- * Logs the total word count and solve duration so big-board numbers are visible.
+ * Logs the total word count and solve duration. Rejects only if BOTH the worker
+ * and the main-thread fallback fail — the caller then hides reveal options.
  */
 import type { Board } from '../core/board/types'
 import { runSolve } from '../core/dictionary/solveTask'
 
 export interface SolveResult {
   total: number
-  words: string[]
+  entries: [string, number[]][]
   ms: number
   viaWorker: boolean
 }
@@ -22,15 +23,23 @@ export function solveBoardAsync(board: Board): Promise<SolveResult> {
     return r
   }
 
+  const solveOnMainThread = (): SolveResult => {
+    const start = performance.now()
+    const { total, entries } = runSolve(board)
+    return { total, entries, ms: performance.now() - start, viaWorker: false }
+  }
+
   if (typeof Worker !== 'undefined') {
-    return new Promise<SolveResult>((resolve) => {
+    return new Promise<SolveResult>((resolve, reject) => {
       let settled = false
-      const finishMain = () => {
+      const fallback = () => {
         if (settled) return
         settled = true
-        const start = performance.now()
-        const { total, words } = runSolve(board)
-        resolve(log({ total, words, ms: performance.now() - start, viaWorker: false }))
+        try {
+          resolve(log(solveOnMainThread()))
+        } catch (err) {
+          reject(err) // both worker and main thread failed
+        }
       }
       try {
         const worker = new Worker(new URL('../workers/solver.worker.ts', import.meta.url), {
@@ -40,24 +49,25 @@ export function solveBoardAsync(board: Board): Promise<SolveResult> {
           if (settled) return
           settled = true
           worker.terminate()
-          const data = e.data as { total: number; words: string[]; ms: number }
+          const data = e.data as { total: number; entries: [string, number[]][]; ms: number }
           resolve(log({ ...data, viaWorker: true }))
         }
         worker.onerror = () => {
           worker.terminate()
-          finishMain() // fall back to the main thread on worker failure
+          fallback()
         }
         worker.postMessage(board)
       } catch {
-        finishMain()
+        fallback()
       }
     })
   }
 
-  // No Worker support: solve on the main thread with the loading state shown.
-  return new Promise<SolveResult>((resolve) => {
-    const start = performance.now()
-    const { total, words } = runSolve(board)
-    resolve(log({ total, words, ms: performance.now() - start, viaWorker: false }))
+  return new Promise<SolveResult>((resolve, reject) => {
+    try {
+      resolve(log(solveOnMainThread()))
+    } catch (err) {
+      reject(err)
+    }
   })
 }

@@ -64,6 +64,12 @@ interface BoardTraceProps {
   revealed?: boolean
   /** Optional overlay centred over the grid (e.g. the countdown). */
   overlay?: React.ReactNode
+  /** Externally-driven highlight (results screen: a tapped word's path). */
+  externalPath?: number[] | null
+  /** Hide the current-word line and desktop hint (results display mode). */
+  hideChrome?: boolean
+  /** Render a smaller grid so the board fits beside the results lists. */
+  compact?: boolean
 }
 
 export function BoardTrace({
@@ -72,6 +78,9 @@ export function BoardTrace({
   active = false,
   revealed = true,
   overlay,
+  externalPath = null,
+  hideChrome = false,
+  compact = false,
 }: BoardTraceProps) {
   const [input, setInput] = useState<Input>({ mode: 'idle' })
   const [lineGeom, setLineGeom] = useState<LineGeom | null>(null)
@@ -300,8 +309,10 @@ export function BoardTrace({
   }
 
   // ---- Derived view state ---------------------------------------------------
-  const highlightPath =
+  const internalHighlight =
     input.mode === 'drag' ? input.path : input.mode === 'type' ? input.path ?? [] : []
+  // An external path (results screen) overrides the internal input highlight.
+  const highlightPath = externalPath != null ? externalPath : internalHighlight
   const currentWord =
     input.mode === 'drag'
       ? pathWord(faces, input.path).toUpperCase()
@@ -318,11 +329,15 @@ export function BoardTrace({
 
   return (
     <div className="board-trace">
-      <p className={`current-word${noPath ? ' no-path' : ''}`}>{revealed ? currentWord || ' ' : ' '}</p>
+      {!hideChrome && (
+        <p className={`current-word${noPath ? ' no-path' : ''}`}>
+          {revealed ? currentWord || ' ' : ' '}
+        </p>
+      )}
 
       <div
         ref={gridRef}
-        className={`grid${active ? '' : ' disabled'}`}
+        className={`grid${active ? '' : ' disabled'}${compact ? ' compact' : ''}`}
         data-size={board.size}
         style={
           {
@@ -361,7 +376,9 @@ export function BoardTrace({
         {overlay && <div className="board-overlay">{overlay}</div>}
       </div>
 
-      {revealed && <p className="input-hint">Type or drag to enter words · Enter to submit</p>}
+      {revealed && !hideChrome && (
+        <p className="input-hint">Type or drag to enter words · Enter to submit</p>
+      )}
     </div>
   )
 }

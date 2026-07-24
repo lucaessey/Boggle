@@ -15,13 +15,30 @@ import { Rng } from './rng'
 import type { Board } from './types'
 
 const MAX_ATTEMPTS = balance.maxGenerationAttempts
+const MIN_TOTAL_WORDS = balance.minTotalWords
 
-interface Target {
+export interface Target {
   minLength: number
   count: number
 }
 
-/** How many of the size's targets this board satisfies (used to pick a fallback). */
+/**
+ * The full quality targets for a size: the per-size targets plus the global
+ * minimum-total-words safety net (checked with the early-exit search, so it
+ * stops as soon as `minTotalWords` are found — never a full solve).
+ */
+export function targetsForSize(size: number): Target[] {
+  return [...((sizeConfig(size).targets ?? []) as Target[]), { minLength: 3, count: MIN_TOTAL_WORDS }]
+}
+
+/** Whether a board satisfies every target (each checked with early exit). */
+export function boardMeetsTargets(board: Board, targets: Target[]): boolean {
+  return targets.every(
+    (t) => findWordsOfMinLength(board, t.minLength, t.count).words.length >= t.count,
+  )
+}
+
+/** How many of the targets this board satisfies (used to pick a fallback). */
 function qualityScore(board: Board, targets: Target[]): number {
   let satisfied = 0
   for (const t of targets) {
@@ -43,7 +60,7 @@ function randomSeed(): number {
 export function generateBoard(size: number, seed?: number | string): Board {
   const resolvedSeed = seed ?? randomSeed()
   const rng = new Rng(resolvedSeed)
-  const targets = (sizeConfig(size).targets ?? []) as Target[]
+  const targets = targetsForSize(size)
   const goal = targets.length
 
   let best: Board | null = null

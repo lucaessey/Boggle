@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { neighbours } from '../board/board'
 import { generateBoard } from '../board/generate'
 import { solveBoard } from './solver'
 import { runSolve } from './solveTask'
@@ -13,7 +14,7 @@ describe('runSolve (shared by worker and main thread)', () => {
       const direct = solveBoard(board)
       const task = runSolve(board)
       expect(task.total).toBe(direct.size)
-      expect([...task.words].sort()).toEqual([...direct.keys()].sort())
+      expect(task.entries.map(([w]) => w).sort()).toEqual([...direct.keys()].sort())
     }
   })
 
@@ -21,6 +22,16 @@ describe('runSolve (shared by worker and main thread)', () => {
     const a = runSolve(generateBoard(6, 'det'))
     const b = runSolve(generateBoard(6, 'det'))
     expect(a.total).toBe(b.total)
-    expect(a.words.sort()).toEqual(b.words.sort())
+    expect(a.entries.map(([w]) => w).sort()).toEqual(b.entries.map(([w]) => w).sort())
+  })
+
+  it('returns a valid example path per word (tap-to-highlight uses these)', () => {
+    const board = generateBoard(4, 'paths')
+    for (const [, path] of runSolve(board).entries) {
+      expect(new Set(path).size).toBe(path.length) // no cell reused
+      for (let i = 1; i < path.length; i++) {
+        expect(neighbours(path[i - 1], board.size)).toContain(path[i]) // adjacent steps
+      }
+    }
   })
 })

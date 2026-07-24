@@ -5,7 +5,7 @@ import { goalCount as computeGoal, hasReachedGoal } from '../core/round/peaceful
 import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
 import { Countdown } from './Countdown'
-import { Results } from './Results'
+import { Results, type SolveState } from './Results'
 import { WinScreen } from './WinScreen'
 import { solveBoardAsync } from './solveAsync'
 import { useGamePlay } from './useGamePlay'
@@ -48,6 +48,8 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
   const [board, setBoard] = useState(() => generateBoard(size))
   const [phase, setPhase] = useState<Phase>('countdown')
   const [totalWords, setTotalWords] = useState(0)
+  // The Peaceful solve done up front is reused by the results screen — no re-solve.
+  const [solve, setSolve] = useState<SolveState>({ status: 'solving' })
   const game = useGamePlay(board)
   const ach = useAchievements()
 
@@ -65,17 +67,28 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
   }
 
   // Start the solve as soon as the board exists; countdown runs concurrently.
+  // The full result is kept for the results screen (reused, not re-solved).
   useEffect(() => {
     solveDone.current = false
     countdownDone.current = false
     setPhase('countdown')
+    setSolve({ status: 'solving' })
     let cancelled = false
-    solveBoardAsync(board).then((r) => {
-      if (cancelled) return
-      setTotalWords(r.total)
-      solveDone.current = true
-      if (countdownDone.current) setPhase('playing') // countdown already finished waiting
-    })
+    solveBoardAsync(board)
+      .then((r) => {
+        if (cancelled) return
+        setTotalWords(r.total)
+        setSolve({ status: 'ready', total: r.total, paths: new Map(r.entries) })
+        solveDone.current = true
+        if (countdownDone.current) setPhase('playing')
+      })
+      .catch(() => {
+        if (cancelled) return
+        // Solve failed: let play proceed (goal falls back to 0) with no reveals.
+        setSolve({ status: 'failed' })
+        solveDone.current = true
+        if (countdownDone.current) setPhase('playing')
+      })
     return () => {
       cancelled = true
     }
@@ -132,9 +145,10 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
     return (
       <Results
         heading="Round over"
+        board={board}
         score={game.score}
         found={game.found}
-        totalWords={totalWords}
+        solve={solve}
         onPlayAgain={playAgain}
         onChangeSettings={onChangeSettings}
       />

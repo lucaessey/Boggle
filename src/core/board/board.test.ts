@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import balance from '../../balance.json'
 import { neighbours } from './board'
-import { generateBoard } from './generate'
+import { boardMeetsTargets, generateBoard } from './generate'
 import { findWordsOfMinLength } from '../dictionary/findWords'
+import type { Board } from './types'
 
 const SIZES = [4, 5, 6, 7]
 
@@ -100,6 +101,33 @@ describe('generateBoard — seeded determinism at every size', () => {
     const a = generateBoard(4, 'seed-a').cells.map((c) => c.face).join('')
     const b = generateBoard(4, 'seed-b').cells.map((c) => c.face).join('')
     expect(a).not.toEqual(b)
+  })
+})
+
+describe('board quality minimum (>= 30 findable words)', () => {
+  function makeBoard(size: number, faces: string[]): Board {
+    return {
+      size,
+      seed: 'test',
+      cells: faces.map((face, index) => ({
+        index,
+        row: Math.floor(index / size),
+        col: index % size,
+        face,
+      })),
+    }
+  }
+
+  it('rejects a degenerate board with fewer than 30 words', () => {
+    // A 4x4 board of all "Z" yields no words.
+    const board = makeBoard(4, Array<string>(16).fill('Z'))
+    expect(findWordsOfMinLength(board, 3, 30).words.length).toBeLessThan(30)
+    expect(boardMeetsTargets(board, [{ minLength: 3, count: 30 }])).toBe(false)
+  })
+
+  it('a generated board satisfies the 30-word minimum', () => {
+    const board = generateBoard(4, 'min-words')
+    expect(boardMeetsTargets(board, [{ minLength: 3, count: 30 }])).toBe(true)
   })
 })
 

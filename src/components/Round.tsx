@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { generateBoard } from '../core/board/generate'
-import { solveBoard } from '../core/dictionary/solver'
 import { isStraightLine } from '../core/path/path'
 import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
 import { Countdown } from './Countdown'
-import { Results } from './Results'
+import { Results, type SolveState } from './Results'
+import { solveBoardAsync } from './solveAsync'
 import { useGamePlay } from './useGamePlay'
 import './Round.css'
 
@@ -30,7 +30,7 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
   const [board, setBoard] = useState(() => generateBoard(size))
   const [status, setStatus] = useState<Status>('countdown')
   const [remaining, setRemaining] = useState(roundSeconds)
-  const [totalWords, setTotalWords] = useState(0)
+  const [solve, setSolve] = useState<SolveState>({ status: 'idle' })
   const game = useGamePlay(board)
   const ach = useAchievements()
 
@@ -43,11 +43,28 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
 
   useEffect(() => {
     if (status === 'running' && remaining <= 0) {
-      setTotalWords(solveBoard(board).size)
       setStatus('over')
       ach.record({ type: 'round-ended', size, length: roundSeconds, mode: 'timed', at: Date.now() })
     }
-  }, [status, remaining, board, ach, size, roundSeconds])
+  }, [status, remaining, ach, size, roundSeconds])
+
+  // On round end, solve the board off the main thread for the reveal options —
+  // render the results screen immediately, don't block on it.
+  useEffect(() => {
+    if (status !== 'over' || solve.status !== 'idle') return
+    setSolve({ status: 'solving' })
+    let cancelled = false
+    solveBoardAsync(board)
+      .then((r) => {
+        if (!cancelled) setSolve({ status: 'ready', total: r.total, paths: new Map(r.entries) })
+      })
+      .catch(() => {
+        if (!cancelled) setSolve({ status: 'failed' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [status, board, solve.status])
 
   function beginPlay() {
     game.reset()
@@ -60,6 +77,7 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     game.reset()
     setBoard(generateBoard(size))
     setRemaining(roundSeconds)
+    setSolve({ status: 'idle' })
     setStatus('countdown') // fresh countdown
   }
 
@@ -83,9 +101,10 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     return (
       <Results
         heading="Time!"
+        board={board}
         score={game.score}
         found={game.found}
-        totalWords={totalWords}
+        solve={solve}
         onPlayAgain={playAgain}
         onChangeSettings={onChangeSettings}
       />
