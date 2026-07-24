@@ -4,6 +4,11 @@
   align-items: center;
   gap: 0.75rem;
   width: min(92vw, 24rem);
+  /* Fill the app's content area and lay out top-down (NOT centered), so the
+     grid/HUD/current-word stay put and only the found list flexes. This is what
+     stops an accepted word from re-centering the stack and shifting the grid. */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .hud {
@@ -101,9 +106,16 @@
   color: #4f9bff;
 }
 
-/* Found-words list (during the round). */
+/* Found-words list (during the round). Always rendered — even with zero words —
+   so its space is permanently reserved and adding a word never moves the grid.
+   It flexes to fill the leftover height and is the ONLY thing that scrolls. */
 .found {
   width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* the inner <ul> scrolls, not this wrapper */
 }
 
 .found h2,
@@ -111,6 +123,10 @@
   margin: 0.25rem 0;
   font-size: 1rem;
   opacity: 0.8;
+}
+
+.found h2 {
+  flex: 0 0 auto;
 }
 
 .found ul,
@@ -121,8 +137,17 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.15rem 0.75rem;
-  max-height: 40vh;
+}
+
+/* Only the play-view list scrolls, within its reserved area; reaching its end
+   must not chain-scroll the page. (Do NOT add overflow-anchor:none here —
+   scroll anchoring is helpful.) */
+.found ul {
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .found li,

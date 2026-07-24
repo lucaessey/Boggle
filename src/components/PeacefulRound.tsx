@@ -184,19 +184,19 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
         </button>
       </div>
 
-      {game.found.length > 0 && (
-        <section className="found">
-          <h2>Found · {game.found.length}</h2>
-          <ul>
-            {game.found.map((f) => (
-              <li key={f.word}>
-                <span>{f.word}</span>
-                <span className="pts">{f.points}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Always rendered so its reserved space keeps the grid fixed as words
+          are added; only this list scrolls. */}
+      <section className="found">
+        <h2>Found · {game.found.length}</h2>
+        <ul>
+          {game.found.map((f) => (
+            <li key={f.word}>
+              <span>{f.word}</span>
+              <span className="pts">{f.points}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }

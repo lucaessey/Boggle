@@ -145,19 +145,19 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
         Change settings
       </button>
 
-      {status === 'running' && game.found.length > 0 && (
-        <section className="found">
-          <h2>Found · {game.found.length}</h2>
-          <ul>
-            {game.found.map((f) => (
-              <li key={f.word}>
-                <span>{f.word}</span>
-                <span className="pts">{f.points}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Always rendered (even empty) so its space is reserved and an accepted
+          word can never shift the grid. Only this list scrolls. */}
+      <section className="found">
+        <h2>Found · {game.found.length}</h2>
+        <ul>
+          {game.found.map((f) => (
+            <li key={f.word}>
+              <span>{f.word}</span>
+              <span className="pts">{f.points}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }

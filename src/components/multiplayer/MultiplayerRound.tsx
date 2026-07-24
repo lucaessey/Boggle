@@ -188,19 +188,19 @@ export function MultiplayerRound({ code, uid, isHost, room, offset, onLeave }: M
         {game.feedback ? game.feedback.message : ' '}
       </div>
 
-      {phase === 'playing' && game.found.length > 0 && (
-        <section className="found">
-          <h2>Found · {game.found.length}</h2>
-          <ul>
-            {game.found.map((f) => (
-              <li key={f.word}>
-                <span>{f.word}</span>
-                <span className="pts">{f.points}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Always rendered so its reserved space keeps the grid fixed as words
+          are added; only this list scrolls. */}
+      <section className="found">
+        <h2>Found · {game.found.length}</h2>
+        <ul>
+          {game.found.map((f) => (
+            <li key={f.word}>
+              <span>{f.word}</span>
+              <span className="pts">{f.points}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }
