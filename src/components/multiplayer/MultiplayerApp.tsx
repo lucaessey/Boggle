@@ -14,7 +14,7 @@ import { MultiplayerMenu } from './MultiplayerMenu'
 import { MultiplayerRound } from './MultiplayerRound'
 import './multiplayer.css'
 
-const DEFAULT_SETTINGS = { size: 4, seconds: 120 }
+const DEFAULT_SETTINGS = { size: 4, seconds: 120, mode: 'normal' as const }
 
 const JOIN_ERROR: Record<Exclude<JoinResult, 'ok'>, string> = {
   'not-found': 'Room not found — check the code.',

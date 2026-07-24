@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import balance from '../balance.json'
 import type { Board } from '../core/board/types'
+import { type GameModeId, LONG_MODE_MIN_LENGTH } from '../core/round/modes'
 import { byLengthThenAlpha, longestWords, missedWords } from '../core/round/results'
 import { scoreForWord } from '../core/round/scoring'
 import type { HighScoreRecord } from '../core/stats/stats'
@@ -11,6 +12,8 @@ import type { FoundWord } from './useGamePlay'
 import './Results.css'
 
 const MISSED_CAP = balance.missedWordsDisplayCap
+const DOUBLE_LABEL = balance.gameModes.bonus.doubleLabel
+const TRIPLE_LABEL = balance.gameModes.bonus.tripleLabel
 
 export type { SolveState }
 
@@ -19,13 +22,20 @@ interface WordRowProps {
   points: number
   active: boolean
   onTap: () => void
+  /** Bonus Tiles mode markers (found words only). */
+  double?: boolean
+  triple?: boolean
 }
 
-function WordRow({ word, points, active, onTap }: WordRowProps) {
+function WordRow({ word, points, active, onTap, double, triple }: WordRowProps) {
   return (
     <li className={`word-row${active ? ' active' : ''}`}>
       <button type="button" onClick={onTap}>
-        <span className="wr-word">{word.toUpperCase()}</span>
+        <span className="wr-word">
+          {word.toUpperCase()}
+          {double && <span className="wr-bonus double">{DOUBLE_LABEL}</span>}
+          {triple && <span className="wr-bonus triple">{TRIPLE_LABEL}</span>}
+        </span>
         <span className="wr-len">{word.length}</span>
         <span className="wr-pts">{points}</span>
       </button>
@@ -39,6 +49,8 @@ interface ResultsProps {
   score: number
   found: FoundWord[]
   solve: SolveState
+  /** Active game mode — drives bonus-word markers and the missed-words filter. */
+  gameMode?: GameModeId
   /** Present only when this round set a new personal best (timed mode only). */
   personalBest?: { previous: HighScoreRecord | undefined } | null
   /**
@@ -56,6 +68,7 @@ export function Results({
   score,
   found,
   solve,
+  gameMode = 'normal',
   personalBest,
   leaderboard,
   onPlayAgain,
@@ -75,7 +88,10 @@ export function Results({
   )
 
   const allWords = paths ? [...paths.keys()] : []
-  const missed = paths ? missedWords(allWords, foundLower) : []
+  // Long Words Only: the missed-words reveal lists only words of 5+ letters.
+  const missedSource =
+    gameMode === 'long' ? allWords.filter((w) => w.length >= LONG_MODE_MIN_LENGTH) : allWords
+  const missed = paths ? missedWords(missedSource, foundLower) : []
   const missedShown = missed.slice(0, MISSED_CAP)
   const longest = paths ? longestWords(allWords) : []
 
@@ -134,6 +150,8 @@ export function Results({
                   key={f.word}
                   word={f.word}
                   points={f.points}
+                  double={f.doubleUsed}
+                  triple={f.tripleUsed}
                   active={selected === lw}
                   onTap={() => tap(lw)}
                 />

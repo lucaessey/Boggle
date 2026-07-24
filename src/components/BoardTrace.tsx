@@ -28,18 +28,28 @@ type Input =
   | { mode: 'drag'; path: number[] }
   | { mode: 'type'; typed: string; path: number[] | null }
 
+const BONUS_LABEL = {
+  double: balance.gameModes.bonus.doubleLabel,
+  triple: balance.gameModes.bonus.tripleLabel,
+} as const
+
+/** Which bonus, if any, a tile carries (Bonus Tiles mode). */
+export type TileBonus = 'double' | 'triple' | null
+
 /** A single tile. Memoised so only tiles whose selected/revealed state changes re-render. */
 const Tile = memo(function Tile({
   index,
   face,
   selected,
   revealed,
+  bonus,
   register,
 }: {
   index: number
   face: string
   selected: boolean
   revealed: boolean
+  bonus: TileBonus
   register: (index: number, el: HTMLDivElement | null) => void
 }) {
   const setRef = useCallback((el: HTMLDivElement | null) => register(index, el), [index, register])
@@ -49,9 +59,16 @@ const Tile = memo(function Tile({
   return (
     <div ref={setRef} className="tile" role="gridcell">
       <div
-        className={`tile-face${selected ? ' selected' : ''}${revealed ? '' : ' facedown'}`}
+        className={`tile-face${selected ? ' selected' : ''}${revealed ? '' : ' facedown'}${
+          bonus ? ` bonus bonus-${bonus}` : ''
+        }`}
       >
         {revealed ? face : ''}
+        {revealed && bonus && (
+          <span className={`bonus-badge bonus-badge-${bonus}`} aria-hidden="true">
+            {BONUS_LABEL[bonus]}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -361,6 +378,13 @@ export function BoardTrace({
             face={cell.face}
             selected={selectedSet.has(cell.index)}
             revealed={revealed}
+            bonus={
+              board.bonus?.doubleIndex === cell.index
+                ? 'double'
+                : board.bonus?.tripleIndex === cell.index
+                  ? 'triple'
+                  : null
+            }
             register={register}
           />
         ))}

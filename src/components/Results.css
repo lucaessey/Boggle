@@ -132,6 +132,26 @@
   letter-spacing: 0.03em;
 }
 
+/* Bonus Tiles markers on found words (double-letter / triple-word). */
+.wr-bonus {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: #fff;
+  vertical-align: middle;
+}
+
+.wr-bonus.double {
+  background: #1f5fb0;
+}
+
+.wr-bonus.triple {
+  background: #b06a1f;
+}
+
 .wr-len {
   opacity: 0.55;
   font-variant-numeric: tabular-nums;

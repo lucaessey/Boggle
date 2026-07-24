@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import type { GameModeId } from '../core/round/modes'
 import {
   considerHighScore,
   type ConsiderResult,
@@ -25,6 +26,7 @@ interface AchievementsApi {
     size: number,
     length: number,
     candidate: HighScoreRecord,
+    mode?: GameModeId,
   ) => Pick<ConsiderResult, 'isNewBest' | 'previous'>
   resetHighScores: () => void
 }
@@ -71,9 +73,9 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   )
 
   const recordHighScore = useCallback(
-    (size: number, length: number, candidate: HighScoreRecord) => {
+    (size: number, length: number, candidate: HighScoreRecord, mode: GameModeId = 'normal') => {
       const cur = statsRef.current
-      const result = considerHighScore(cur.lifetime.highScores, size, length, candidate)
+      const result = considerHighScore(cur.lifetime.highScores, size, length, candidate, mode)
       if (result.isNewBest) {
         apply({ ...cur, lifetime: { ...cur.lifetime, highScores: result.scores } })
         setQueue((q) => [...q, { kind: 'best' }])

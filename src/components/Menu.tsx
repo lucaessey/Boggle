@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import balance from '../balance.json'
+import { BLITZ_START_SECONDS } from '../core/round/blitz'
+import { type GameModeId, MODE_ORDER, modeMeta, requiresClock } from '../core/round/modes'
 import type { GameConfig } from './gameConfig'
 import { useScreenBackground } from './Background'
 import { HighScoresButton } from './HighScoresButton'
-import { loadPrefs, saveLength, savePeacefulGoal, saveSize } from './prefs'
+import { loadGameMode, loadPrefs, saveGameMode, saveLength, savePeacefulGoal, saveSize } from './prefs'
 import { TrophyButton } from './TrophyButton'
 import './Menu.css'
 
@@ -17,6 +19,11 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+/** What the player picked before the mode screen (drives the final config). */
+type Pending =
+  | { kind: 'timed'; length: number }
+  | { kind: 'peaceful'; goalPercentage: number }
+
 interface MenuProps {
   onStart: (config: GameConfig) => void
   onOpenAchievements: () => void
@@ -26,8 +33,8 @@ interface MenuProps {
 
 /**
  * Menu flow: board size → round length (six timed options + Peaceful) →
- * (Peaceful only) goal percentage → start. Back returns to the previous step;
- * last-used choices are remembered and preselected.
+ * (Peaceful only) goal percentage → game mode → start. Back returns to the
+ * previous step; last-used choices are remembered and preselected.
  */
 export function Menu({
   onStart,
@@ -36,10 +43,12 @@ export function Menu({
   onOpenMultiplayer,
 }: MenuProps) {
   const prefs = loadPrefs()
-  const [step, setStep] = useState<'size' | 'length' | 'goal'>('size')
+  const [step, setStep] = useState<'size' | 'length' | 'goal' | 'mode'>('size')
   const [size, setSize] = useState<number>(
     prefs.size && SIZES.includes(prefs.size) ? prefs.size : SIZES[0],
   )
+  const [pending, setPending] = useState<Pending | null>(null)
+  const lastMode = loadGameMode()
   // The round-length selector uses background_1; other menu steps use background_2.
   useScreenBackground(step === 'length' ? '1' : '2')
 
@@ -51,12 +60,24 @@ export function Menu({
 
   function chooseLength(length: number) {
     saveLength(length)
-    onStart({ size, mode: 'timed', length })
+    setPending({ kind: 'timed', length })
+    setStep('mode')
   }
 
   function chooseGoal(goalPercentage: number) {
     savePeacefulGoal(goalPercentage)
-    onStart({ size, mode: 'peaceful', goalPercentage })
+    setPending({ kind: 'peaceful', goalPercentage })
+    setStep('mode')
+  }
+
+  function chooseMode(gameMode: GameModeId) {
+    saveGameMode(gameMode)
+    if (!pending) return
+    if (pending.kind === 'timed') {
+      onStart({ size, mode: 'timed', length: pending.length, gameMode })
+    } else {
+      onStart({ size, mode: 'peaceful', goalPercentage: pending.goalPercentage, gameMode })
+    }
   }
 
   if (step === 'size') {
@@ -110,24 +131,67 @@ export function Menu({
     )
   }
 
-  // step === 'goal'
+  if (step === 'goal') {
+    return (
+      <div className="menu">
+        <h2>Peaceful goal</h2>
+        <p className="menu-sub">Find this share of the board's words to win.</p>
+        <div className="menu-options goals">
+          {GOAL_PERCENTAGES.map((pct) => (
+            <button
+              key={pct}
+              type="button"
+              className={`menu-button${pct === prefs.peacefulGoal ? ' preselected' : ''}`}
+              onClick={() => chooseGoal(pct)}
+            >
+              {pct}%
+            </button>
+          ))}
+        </div>
+        <button type="button" className="back" onClick={() => setStep('length')}>
+          ← Back
+        </button>
+      </div>
+    )
+  }
+
+  // step === 'mode'
+  const isPeaceful = pending?.kind === 'peaceful'
   return (
     <div className="menu">
-      <h2>Peaceful goal</h2>
-      <p className="menu-sub">Find this share of the board's words to win.</p>
-      <div className="menu-options goals">
-        {GOAL_PERCENTAGES.map((pct) => (
-          <button
-            key={pct}
-            type="button"
-            className={`menu-button${pct === prefs.peacefulGoal ? ' preselected' : ''}`}
-            onClick={() => chooseGoal(pct)}
-          >
-            {pct}%
-          </button>
-        ))}
+      <h2>Game mode</h2>
+      <div className="menu-options modes">
+        {MODE_ORDER.map((id) => {
+          const meta = modeMeta(id)
+          const clockOnly = requiresClock(id)
+          const disabled = isPeaceful && clockOnly
+          const label =
+            id === 'blitz' ? `${meta.name} — starts at ${formatTime(BLITZ_START_SECONDS)}` : meta.name
+          const desc = disabled ? 'Needs a clock — not available in Peaceful.' : meta.desc
+          return (
+            <button
+              key={id}
+              type="button"
+              disabled={disabled}
+              className={`menu-button mode-button${id === lastMode && !disabled ? ' preselected' : ''}${
+                disabled ? ' disabled' : ''
+              }`}
+              onClick={() => chooseMode(id)}
+            >
+              <span className="mode-name">{label}</span>
+              <span className="mode-desc">{desc}</span>
+            </button>
+          )
+        })}
       </div>
-      <button type="button" className="back" onClick={() => setStep('length')}>
+      {!isPeaceful && (
+        <p className="menu-sub">Blitz uses its own clock and ignores the round length you picked.</p>
+      )}
+      <button
+        type="button"
+        className="back"
+        onClick={() => setStep(isPeaceful ? 'goal' : 'length')}
+      >
         ← Back
       </button>
     </div>

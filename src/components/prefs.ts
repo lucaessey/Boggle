@@ -2,10 +2,31 @@
  * Last-used menu selections, persisted in localStorage. Guarded so a missing or
  * throwing localStorage (private mode, SSR) degrades to defaults.
  */
+import { type GameModeId, isGameModeId } from '../core/round/modes'
+
 const SIZE_KEY = 'boggle.size'
 const LENGTH_KEY = 'boggle.length'
 const GOAL_KEY = 'boggle.peacefulGoal'
 const NICKNAME_KEY = 'boggle.nickname'
+const GAME_MODE_KEY = 'boggle.gameMode'
+
+/** Last-used game mode, defaulting to Normal when unset or invalid. */
+export function loadGameMode(): GameModeId {
+  try {
+    const raw = localStorage.getItem(GAME_MODE_KEY)
+    return isGameModeId(raw) ? raw : 'normal'
+  } catch {
+    return 'normal'
+  }
+}
+
+export function saveGameMode(mode: GameModeId): void {
+  try {
+    localStorage.setItem(GAME_MODE_KEY, mode)
+  } catch {
+    // ignore: persistence is best-effort
+  }
+}
 const LB_CONSENT_KEY = 'boggle.leaderboardConsent'
 
 /** Public-leaderboard opt-in: 'yes' submits, 'no' never prompts, null = unasked. */

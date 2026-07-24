@@ -10,7 +10,7 @@ const COUNTDOWN_MS = 3000 + 600
 const renderRound = (props: { size: number; roundSeconds: number }) =>
   render(
     <AchievementsProvider>
-      <Round {...props} onChangeSettings={() => {}} />
+      <Round {...props} gameMode="normal" onChangeSettings={() => {}} />
     </AchievementsProvider>,
   )
 

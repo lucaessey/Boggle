@@ -4,9 +4,20 @@
  * the net layer feeds raw rows in and writes what these functions decide.
  */
 
+import type { GameModeId } from '../round/modes'
+
 export const MAX_ENTRIES = 50
 
 export type Metric = 'score' | 'words'
+
+/**
+ * The global leaderboard is NORMAL MODE ONLY — the other modes are not
+ * comparable (different clocks, word rules, or scoring), so they must never
+ * write to it. Every submit path gates on this.
+ */
+export function isLeaderboardEligibleMode(mode: GameModeId): boolean {
+  return mode === 'normal'
+}
 
 /** A player's two independent personal bests for one board. */
 export interface StoredBest {

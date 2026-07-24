@@ -154,6 +154,41 @@
   color: transparent;
 }
 
+/* Bonus Tiles mode: two unmistakable tints + a corner label. */
+.tile-face.bonus-double {
+  background: linear-gradient(180deg, #d9ecff 0%, #a9ccf2 100%); /* cool blue */
+}
+.tile-face.bonus-triple {
+  background: linear-gradient(180deg, #ffe6b3 0%, #f4c268 100%); /* warm amber */
+}
+/* Selection must still win over the bonus tint (higher specificity). */
+.tile-face.selected.bonus {
+  background: var(--tile-selected-bg, #4f8cff);
+}
+
+/* Corner badge naming the bonus. Sized relative to the tile font (which scales
+   per board size) with a hard floor so it stays legible on a 7×7. */
+.bonus-badge {
+  position: absolute;
+  top: 5%;
+  right: 6%;
+  font-size: clamp(0.5rem, 0.34em, 0.8rem);
+  font-weight: 900;
+  line-height: 1;
+  padding: 0.15em 0.28em;
+  border-radius: 0.35em;
+  color: #fff;
+  text-transform: none;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.bonus-badge-double {
+  background: #1f5fb0;
+}
+.bonus-badge-triple {
+  background: #b06a1f;
+}
+
 /* Overlay layer centred over the grid (countdown). */
 .board-overlay {
   position: absolute;

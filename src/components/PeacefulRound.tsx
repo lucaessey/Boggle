@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { generateBoard } from '../core/board/generate'
+import balance from '../balance.json'
+import { generateBoard, generateOptionsForMode } from '../core/board/generate'
 import { isStraightLine } from '../core/path/path'
+import { type GameModeId, LONG_MODE_MIN_LENGTH, minWordLengthForMode } from '../core/round/modes'
 import { goalCount as computeGoal, hasReachedGoal } from '../core/round/peaceful'
 import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
@@ -19,6 +21,7 @@ type Phase = 'countdown' | 'loading' | 'playing' | 'over' | 'won'
 interface PeacefulRoundProps {
   size: number
   goalPercentage: number
+  gameMode: GameModeId
   onChangeSettings: () => void
 }
 
@@ -44,17 +47,29 @@ function ProgressBar({ found, total, goal }: { found: number; total: number; goa
  * countdown runs, hiding most of the solve time; if the solve is still running
  * when the countdown ends, a brief loading state is shown before play begins.
  */
-export function PeacefulRound({ size, goalPercentage, onChangeSettings }: PeacefulRoundProps) {
-  const [board, setBoard] = useState(() => generateBoard(size))
+export function PeacefulRound({ size, goalPercentage, gameMode, onChangeSettings }: PeacefulRoundProps) {
+  const [board, setBoard] = useState(() =>
+    generateBoard(size, undefined, generateOptionsForMode(gameMode)),
+  )
   const [phase, setPhase] = useState<Phase>('countdown')
-  const game = useGamePlay(board)
+  const game = useGamePlay(board, {
+    gameMode,
+    minWordLength: minWordLengthForMode(gameMode, balance.minWordLength),
+  })
   const ach = useAchievements()
 
   // Solve as soon as the board exists (concurrent with the countdown); the
   // result is reused by the results screen. Always resolves (ready or failed).
   const solve = useBoardSolve(board, true)
   const solveReady = solve.status === 'ready' || solve.status === 'failed'
-  const totalWords = solve.status === 'ready' ? solve.total : 0
+  // Long Words Only measures the goal against 5+ letter words only (the ones you
+  // can actually submit), so the target stays reachable.
+  const totalWords =
+    solve.status === 'ready'
+      ? gameMode === 'long'
+        ? [...solve.paths.keys()].filter((w) => w.length >= LONG_MODE_MIN_LENGTH).length
+        : solve.total
+      : 0
 
   const countdownDone = useRef(false)
 
@@ -89,7 +104,7 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
 
   function handleWord(word: string, path: number[] | null) {
     if (phase !== 'playing') return
-    const { outcome, points } = game.submit(word)
+    const { outcome, points } = game.submit(word, path)
     if (outcome === 'accepted') {
       ach.record({
         type: 'accepted',
@@ -109,7 +124,7 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
 
   function playAgain() {
     game.reset()
-    setBoard(generateBoard(size)) // effect restarts countdown + solve
+    setBoard(generateBoard(size, undefined, generateOptionsForMode(gameMode))) // restarts countdown + solve
   }
 
   if (phase === 'loading') {
@@ -135,6 +150,7 @@ export function PeacefulRound({ size, goalPercentage, onChangeSettings }: Peacef
         score={game.score}
         found={game.found}
         solve={solve}
+        gameMode={gameMode}
         onPlayAgain={playAgain}
         onChangeSettings={onChangeSettings}
       />

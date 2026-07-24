@@ -13,9 +13,17 @@ import balance from '../../balance.json'
 
 const { minLength, basePoints, pointsPerExtraLetter } = balance.scoring
 
-/** Points for a word, by its letter length (a "Qu" tile counts as two letters). */
-export function scoreForWord(word: string): number {
-  const len = word.length
+/**
+ * Points for an effective letter length. Kept separate from `scoreForWord` so
+ * Bonus Tiles mode (which adjusts the effective length, e.g. a double-letter
+ * tile counting twice) can score in the same linear model without a word string.
+ */
+export function scoreForLength(len: number): number {
   if (len < minLength) return 0
   return basePoints + (len - minLength) * pointsPerExtraLetter
+}
+
+/** Points for a word, by its letter length (a "Qu" tile counts as two letters). */
+export function scoreForWord(word: string): number {
+  return scoreForLength(word.length)
 }

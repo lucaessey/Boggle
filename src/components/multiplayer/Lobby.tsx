@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import balance from '../../balance.json'
+import { type GameModeId, MODE_ORDER, modeMeta } from '../../core/round/modes'
 import { startRound, updateSettings } from '../../net/room'
 import type { RoomState } from '../../net/roomTypes'
 import { useScreenBackground } from '../Background'
 
 const SIZES = Object.keys(balance.sizes).map(Number).sort((a, b) => a - b)
 const LENGTHS: number[] = [...balance.roundLengths].sort((a, b) => a - b)
+
+// Modes playable in multiplayer. Blitz needs a per-player clock and Bonus Tiles
+// needs traced-path sync, neither of which fits the shared-timer / word-list
+// sync model — so they are single-player only and shown disabled here.
+const MP_ENABLED: ReadonlySet<GameModeId> = new Set(['normal', 'long'])
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -30,6 +36,7 @@ export function Lobby({ code, uid, isHost, room, onLeave }: LobbyProps) {
   const players = Object.entries(room.players ?? {})
   const playerCount = players.length
   const { size, seconds } = room.settings
+  const mode: GameModeId = room.settings.mode ?? 'normal'
 
   function copyCode() {
     try {
@@ -84,7 +91,7 @@ export function Lobby({ code, uid, isHost, room, onLeave }: LobbyProps) {
                     key={s}
                     type="button"
                     className={`seg-btn${s === size ? ' active' : ''}`}
-                    onClick={() => updateSettings(code, { size: s, seconds }).catch(() => {})}
+                    onClick={() => updateSettings(code, { size: s, seconds, mode }).catch(() => {})}
                   >
                     {s}×{s}
                   </button>
@@ -99,17 +106,39 @@ export function Lobby({ code, uid, isHost, room, onLeave }: LobbyProps) {
                     key={len}
                     type="button"
                     className={`seg-btn${len === seconds ? ' active' : ''}`}
-                    onClick={() => updateSettings(code, { size, seconds: len }).catch(() => {})}
+                    onClick={() => updateSettings(code, { size, seconds: len, mode }).catch(() => {})}
                   >
                     {formatTime(len)}
                   </button>
                 ))}
               </div>
             </div>
+            <div className="lobby-setting">
+              <span className="lobby-setting-label">Mode</span>
+              <div className="seg">
+                {MODE_ORDER.map((id) => {
+                  const enabled = MP_ENABLED.has(id)
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      disabled={!enabled}
+                      title={enabled ? modeMeta(id).desc : 'Single-player only'}
+                      className={`seg-btn${id === mode ? ' active' : ''}${enabled ? '' : ' disabled'}`}
+                      onClick={() => updateSettings(code, { size, seconds, mode: id }).catch(() => {})}
+                    >
+                      {modeMeta(id).name}
+                    </button>
+                  )
+                })}
+              </div>
+              <span className="lobby-setting-note">Blitz and Bonus Tiles are single-player only.</span>
+            </div>
           </>
         ) : (
           <p className="lobby-readonly">
-            Host chose <strong>{size}×{size}</strong> · <strong>{formatTime(seconds)}</strong>
+            Host chose <strong>{size}×{size}</strong> · <strong>{formatTime(seconds)}</strong> ·{' '}
+            <strong>{modeMeta(mode).name}</strong>
           </p>
         )}
       </section>

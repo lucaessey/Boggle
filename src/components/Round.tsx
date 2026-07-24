@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
-import { generateBoard } from '../core/board/generate'
+import balance from '../balance.json'
+import { generateBoard, generateOptionsForMode } from '../core/board/generate'
+import { isLeaderboardEligibleMode } from '../core/leaderboard/leaderboard'
 import { isStraightLine } from '../core/path/path'
+import { clockAfterSubmit, initialClockSeconds } from '../core/round/blitz'
+import { type GameModeId, minWordLengthForMode } from '../core/round/modes'
 import type { HighScoreRecord } from '../core/stats/stats'
 import { useAchievements } from './AchievementsContext'
 import { BoardTrace } from './BoardTrace'
@@ -32,19 +36,27 @@ function formatTime(seconds: number): string {
 interface RoundProps {
   size: number
   roundSeconds: number
+  gameMode: GameModeId
   onChangeSettings: () => void
 }
 
 /** Timed round: countdown → play → results. The timer starts at countdown end. */
-export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
-  const [board, setBoard] = useState(() => generateBoard(size))
+export function Round({ size, roundSeconds, gameMode, onChangeSettings }: RoundProps) {
+  const [board, setBoard] = useState(() =>
+    generateBoard(size, undefined, generateOptionsForMode(gameMode)),
+  )
   const [status, setStatus] = useState<Status>('countdown')
-  const [remaining, setRemaining] = useState(roundSeconds)
-  const game = useGamePlay(board)
+  // Blitz starts at its own clock and ignores the chosen round length.
+  const [remaining, setRemaining] = useState(() => initialClockSeconds(gameMode, roundSeconds))
+  const [timeFlash, setTimeFlash] = useState(false) // Blitz: pulse when time is added
+  const game = useGamePlay(board, {
+    gameMode,
+    minWordLength: minWordLengthForMode(gameMode, balance.minWordLength),
+  })
   const ach = useAchievements()
   // Solve the board off the main thread once the round is over (for reveals).
   const solve = useBoardSolve(board, status === 'over')
-  // Set when this round beat the record for this size+length (banner on results).
+  // Set when this round beat the record for this size+length+mode (banner on results).
   const [personalBest, setPersonalBest] = useState<{ previous: HighScoreRecord | undefined } | null>(
     null,
   )
@@ -62,36 +74,54 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
       ach.record({ type: 'round-ended', size, length: roundSeconds, mode: 'timed', at: Date.now() })
       // High score: read the previous best, then write if strictly higher, and
       // capture the previous value for the banner — all before results render.
-      const hs = ach.recordHighScore(size, roundSeconds, {
-        score: game.score,
-        wordsFound: game.found.length,
-        longestWord: longestFound(game.found),
-        date: new Date(Date.now()).toISOString(),
-      })
+      const hs = ach.recordHighScore(
+        size,
+        roundSeconds,
+        {
+          score: game.score,
+          wordsFound: game.found.length,
+          longestWord: longestFound(game.found),
+          date: new Date(Date.now()).toISOString(),
+        },
+        gameMode,
+      )
       setPersonalBest(hs.isNewBest ? { previous: hs.previous } : null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, remaining, size, roundSeconds])
 
+  // Clear the Blitz time-added pulse shortly after it fires.
+  useEffect(() => {
+    if (!timeFlash) return
+    const id = setTimeout(() => setTimeFlash(false), 450)
+    return () => clearTimeout(id)
+  }, [timeFlash])
+
   function beginPlay() {
     game.reset()
-    setRemaining(roundSeconds)
+    setRemaining(initialClockSeconds(gameMode, roundSeconds))
     ach.startRound(Date.now()) // round timing starts at countdown end
     setStatus('running') // timer starts now, not when the board was generated
   }
 
   function playAgain() {
     game.reset()
-    setBoard(generateBoard(size))
-    setRemaining(roundSeconds)
+    setBoard(generateBoard(size, undefined, generateOptionsForMode(gameMode)))
+    setRemaining(initialClockSeconds(gameMode, roundSeconds))
     setPersonalBest(null)
     setStatus('countdown') // fresh countdown; the solve resets via useBoardSolve
   }
 
   function handleWord(word: string, path: number[] | null) {
     if (status !== 'running') return
-    const { outcome, points } = game.submit(word)
+    const { outcome, points } = game.submit(word, path)
     if (outcome === 'accepted') {
+      // Blitz: an accepted word adds bonus seconds; pulse the clock.
+      setRemaining((r) => {
+        const next = clockAfterSubmit(gameMode, r, true)
+        if (next !== r) setTimeFlash(true)
+        return next
+      })
       ach.record({
         type: 'accepted',
         word,
@@ -107,13 +137,14 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
   if (status === 'over') {
     return (
       <Results
-        heading="Time!"
+        heading={gameMode === 'blitz' ? 'Blitz over!' : 'Time!'}
         board={board}
         score={game.score}
         found={game.found}
         solve={solve}
+        gameMode={gameMode}
         personalBest={personalBest}
-        leaderboard={{ size, seconds: roundSeconds }}
+        leaderboard={isLeaderboardEligibleMode(gameMode) ? { size, seconds: roundSeconds } : null}
         onPlayAgain={playAgain}
         onChangeSettings={onChangeSettings}
       />
@@ -124,7 +155,11 @@ export function Round({ size, roundSeconds, onChangeSettings }: RoundProps) {
     <div className="round">
       <div className="hud">
         <span className="score">Score: {game.score}</span>
-        <span className={`timer${remaining <= 10 && status === 'running' ? ' low' : ''}`}>
+        <span
+          className={`timer${remaining <= 10 && status === 'running' ? ' low' : ''}${
+            timeFlash ? ' added' : ''
+          }`}
+        >
           {formatTime(remaining)}
         </span>
       </div>

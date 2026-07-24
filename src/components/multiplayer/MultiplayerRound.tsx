@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import balance from '../../balance.json'
-import { generateBoard } from '../../core/board/generate'
+import { generateBoard, generateOptionsForMode } from '../../core/board/generate'
+import { minWordLengthForMode } from '../../core/round/modes'
 import { isStraightLine } from '../../core/path/path'
 import {
   computeMultiplayerScores,
@@ -39,11 +40,18 @@ interface MultiplayerRoundProps {
 
 export function MultiplayerRound({ code, uid, isHost, room, offset, onLeave }: MultiplayerRoundProps) {
   const { size, seconds } = room.settings
+  const mode = room.settings.mode ?? 'normal'
   const seed = room.seed ?? ''
   const startAt = room.startAt ?? 0
 
-  const board = useMemo(() => generateBoard(size, seed), [size, seed])
-  const game = useGamePlay(board)
+  const board = useMemo(
+    () => generateBoard(size, seed, generateOptionsForMode(mode)),
+    [size, seed, mode],
+  )
+  const game = useGamePlay(board, {
+    gameMode: mode,
+    minWordLength: minWordLengthForMode(mode, balance.minWordLength),
+  })
   const ach = useAchievements()
 
   const [now, setNow] = useState(Date.now())
@@ -112,7 +120,7 @@ export function MultiplayerRound({ code, uid, isHost, room, offset, onLeave }: M
 
   function handleWord(word: string, path: number[] | null) {
     if (phase !== 'playing') return
-    const { outcome, points } = game.submit(word)
+    const { outcome, points } = game.submit(word, path)
     if (outcome === 'accepted') {
       ach.record({
         type: 'accepted',

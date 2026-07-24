@@ -9,6 +9,29 @@
   "countdownSeconds": 3,
   "roundLengths": [60, 90, 120, 180, 240, 300],
   "peaceful": { "goalPercentages": [25, 50, 75, 100], "winScreenSeconds": 5 },
+  "gameModes": {
+    "order": ["normal", "blitz", "long", "bonus"],
+    "normal": { "name": "Normal", "desc": "Classic rules — the standard game." },
+    "blitz": {
+      "name": "Blitz",
+      "desc": "Fast clock: +3s per accepted word, no maximum.",
+      "requiresClock": true,
+      "startSeconds": 30,
+      "bonusSeconds": 3
+    },
+    "long": {
+      "name": "Long Words Only",
+      "desc": "Only words of 5+ letters count.",
+      "minLength": 5,
+      "minBoardWords": 10
+    },
+    "bonus": {
+      "name": "Bonus Tiles",
+      "desc": "One double-letter and one triple-word tile.",
+      "doubleLabel": "2×L",
+      "tripleLabel": "3×W"
+    }
+  },
   "achievements": {
     "firstBloodSeconds": 5,
     "centuryScore": 100,

@@ -52,13 +52,19 @@ function App() {
 
     const key =
       config.mode === 'timed'
-        ? `t-${config.size}-${config.length}`
-        : `p-${config.size}-${config.goalPercentage}`
+        ? `t-${config.size}-${config.length}-${config.gameMode}`
+        : `p-${config.size}-${config.goalPercentage}-${config.gameMode}`
     const back = () => setConfig(null)
 
     if (config.mode === 'timed') {
       return (
-        <Round key={key} size={config.size} roundSeconds={config.length} onChangeSettings={back} />
+        <Round
+          key={key}
+          size={config.size}
+          roundSeconds={config.length}
+          gameMode={config.gameMode}
+          onChangeSettings={back}
+        />
       )
     }
     return (
@@ -66,6 +72,7 @@ function App() {
         key={key}
         size={config.size}
         goalPercentage={config.goalPercentage}
+        gameMode={config.gameMode}
         onChangeSettings={back}
       />
     )

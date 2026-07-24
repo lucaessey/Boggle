@@ -18,6 +18,16 @@ export interface Cell {
   face: Face
 }
 
+/**
+ * Bonus-tile positions for Bonus Tiles mode: one double-letter tile and one
+ * (distinct) triple-word tile, by flat cell index. Drawn from the seeded RNG so
+ * a given seed always yields the same positions.
+ */
+export interface BonusTiles {
+  doubleIndex: number
+  tripleIndex: number
+}
+
 /** A generated board: a square grid of cells plus the seed it was built from. */
 export interface Board {
   /** Edge length of the (square) grid, from balance.json `gridSize`. */
@@ -26,4 +36,6 @@ export interface Board {
   cells: Cell[]
   /** The seed used to generate this board (reusing it reproduces the board). */
   seed: number | string
+  /** Present only in Bonus Tiles mode: the designated bonus tile positions. */
+  bonus?: BonusTiles
 }

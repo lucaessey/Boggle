@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   boardKey,
+  isLeaderboardEligibleMode,
   type LeaderboardEntry,
   personalBestUpdate,
   rankEntries,
 } from './leaderboard'
+
+describe('isLeaderboardEligibleMode — Normal only', () => {
+  it('allows Normal and rejects every other mode', () => {
+    expect(isLeaderboardEligibleMode('normal')).toBe(true)
+    expect(isLeaderboardEligibleMode('blitz')).toBe(false)
+    expect(isLeaderboardEligibleMode('long')).toBe(false)
+    expect(isLeaderboardEligibleMode('bonus')).toBe(false)
+  })
+})
 
 describe('boardKey', () => {
   it('encodes size and seconds as {size}x{seconds}', () => {

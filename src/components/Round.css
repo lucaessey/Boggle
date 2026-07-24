@@ -28,6 +28,30 @@
   color: #ff5a5a;
 }
 
+/* Blitz: pulse/flash green when accepted words add time to the clock. */
+.timer.added {
+  animation: timer-added 0.45s ease-out;
+}
+
+@keyframes timer-added {
+  0% {
+    color: #35c46a;
+    transform: scale(1.35);
+    text-shadow: 0 0 12px rgba(53, 196, 106, 0.8);
+  }
+  100% {
+    color: inherit;
+    transform: scale(1);
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer.added {
+    animation: none;
+  }
+}
+
 .primary {
   padding: 0.7rem 1.6rem;
   font-size: 1.05rem;

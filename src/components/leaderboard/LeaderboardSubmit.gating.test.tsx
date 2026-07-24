@@ -2,6 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
 import type { Board } from '../../core/board/types'
+import { isLeaderboardEligibleMode } from '../../core/leaderboard/leaderboard'
+import type { GameModeId } from '../../core/round/modes'
 import { Results, type SolveState } from '../Results'
 
 afterEach(cleanup)
@@ -45,5 +47,23 @@ describe('leaderboard submit gating', () => {
     localStorage.setItem('boggle.leaderboardConsent', 'no')
     const { container } = render(<Results {...base} leaderboard={{ size: 4, seconds: 60 }} />)
     expect(consentPrompt(container)).toBeNull()
+  })
+
+  it('non-Normal modes produce no leaderboard write (the gate forces leaderboard=null)', () => {
+    // Round passes leaderboard only when isLeaderboardEligibleMode(mode) — Normal
+    // only. Simulate each mode's gate and assert non-Normal never mounts submit.
+    for (const mode of ['blitz', 'long', 'bonus'] as GameModeId[]) {
+      const gated = isLeaderboardEligibleMode(mode) ? { size: 4, seconds: 60 } : null
+      expect(gated).toBeNull()
+      const { container } = render(
+        <Results {...base} gameMode={mode} leaderboard={gated} />,
+      )
+      expect(consentPrompt(container)).toBeNull()
+      cleanup()
+    }
+    // Normal is eligible and shows the prompt.
+    const normalGate = isLeaderboardEligibleMode('normal') ? { size: 4, seconds: 60 } : null
+    const { container } = render(<Results {...base} gameMode="normal" leaderboard={normalGate} />)
+    expect(consentPrompt(container)).not.toBeNull()
   })
 })

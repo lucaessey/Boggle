@@ -2,6 +2,8 @@
  * Room data-model types and pure join rules (no Firebase).
  * Mirrors /rooms/{CODE} in the Realtime Database.
  */
+import type { GameModeId } from '../core/round/modes'
+
 export const MAX_PLAYERS = 10
 
 export type RoomStatus = 'lobby' | 'countdown' | 'playing' | 'results'
@@ -9,6 +11,8 @@ export type RoomStatus = 'lobby' | 'countdown' | 'playing' | 'results'
 export interface RoomSettings {
   size: number
   seconds: number
+  /** Game mode for the room; absent (older rooms) means Normal. */
+  mode?: GameModeId
 }
 
 export interface RoomPlayer {
