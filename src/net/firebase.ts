@@ -3,9 +3,8 @@
  * anonymous auth uid is cached. Every net/* module (room, leaderboard) reuses
  * this single app/auth/db so there is only ever one connection and one uid.
  *
- * The SDK is loaded via dynamic import(), so single-player users who never open
- * multiplayer or the global leaderboard never download it (it lands in its own
- * lazily-fetched chunk).
+ * The SDK is initialized via dynamic import() only when multiplayer or the
+ * global leaderboard opens. The PWA precaches the chunks without executing them.
  */
 
 // Public by design — security is enforced by database rules. No Analytics.

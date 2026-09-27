@@ -6,11 +6,12 @@ import type { GameConfig } from './components/gameConfig'
 import { HighScoresScreen } from './components/HighScoresScreen'
 import { Menu } from './components/Menu'
 import { PeacefulRound } from './components/PeacefulRound'
+import { PwaControls } from './components/PwaControls'
 import { Round } from './components/Round'
 import './App.css'
 
-// Code-split: Firebase + all multiplayer code load only when a user opens
-// Multiplayer — single-player never downloads it.
+// Code-split: multiplayer and Firebase initialize only when Multiplayer opens.
+// The PWA also precaches these chunks for consistent offline navigation.
 const MultiplayerApp = lazy(() =>
   import('./components/multiplayer/MultiplayerApp').then((m) => ({ default: m.MultiplayerApp })),
 )
@@ -88,6 +89,7 @@ function App() {
         <main className={`app${showTitle ? '' : ' compact'}`}>
           {showTitle && <h1>Boggle</h1>}
           {content()}
+          <PwaControls visible={showTitle} />
         </main>
       </AchievementsProvider>
     </BackgroundProvider>

@@ -22,6 +22,17 @@
   line-height: 1.1;
 }
 
+/* Leave room for installation/update controls on short screens. Game screens
+   retain their fixed viewport and existing inner scroll regions. */
+.app:not(.compact) {
+  overflow-y: auto;
+  justify-content: safe center;
+}
+
+.app:not(.compact) > * {
+  flex-shrink: 0;
+}
+
 .app p {
   margin: 0;
   opacity: 0.7;

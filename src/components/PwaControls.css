@@ -1,0 +1,52 @@
+.pwa-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(92vw, 24rem);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.pwa-controls:empty {
+  display: none;
+}
+
+.pwa-controls .pwa-notice {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.pwa-controls p {
+  opacity: 1;
+}
+
+.pwa-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pwa-controls button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pwa-controls button:hover {
+  background: var(--accent-bg);
+}
+
+.pwa-controls button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

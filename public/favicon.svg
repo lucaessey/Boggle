@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <text x="50" y="50" font-size="88" text-anchor="middle" dominant-baseline="central">🔠</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#16171d"/>
+  <rect x="112" y="112" width="288" height="288" rx="44" fill="#4f8cff"/>
+  <path fill="#fff" d="M196 164h67c43 0 66 17 66 46 0 21-11 34-28 40 23 6 36 22 36 45 0 35-27 53-73 53h-68V164zm40 34v39h25c19 0 29-6 29-20 0-13-10-19-29-19h-25zm0 70v46h28c22 0 33-7 33-23 0-15-11-23-33-23h-28z"/>
 </svg>

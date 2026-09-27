@@ -3,8 +3,8 @@
 A Boggle-like word game, built as a mobile-first PWA.
 
 - **Stack:** Vite + React + TypeScript
-- **Deploy target:** GitHub Pages (no backend; all state in `localStorage`)
-- **Vite `base`:** set to `./` so the build works from a Pages project subpath.
+- **Deploy target:** GitHub Pages; solo progress lives in `localStorage`, while multiplayer and global leaderboards use Firebase.
+- **Vite `base`:** `/Boggle/`, matching the Pages project subpath and PWA scope.
 
 ## Development
 
@@ -12,8 +12,33 @@ A Boggle-like word game, built as a mobile-first PWA.
 npm install
 npm run dev      # start the dev server
 npm run build    # typecheck + production build
+npm run preview  # serve the production PWA at http://localhost:4173/Boggle/
 npm test         # run unit tests (Vitest)
 ```
+
+## Install and play offline
+
+Open the deployed HTTPS site (or the local production preview). In supporting
+browsers, choose **Install Boggle** on the menu or use the browser's install
+command. On iPhone/iPad, use Safari's **Share → Add to Home Screen**, then open
+the home-screen icon.
+
+After the first online visit shows **Boggle is ready for offline play**, solo
+rounds, all game modes, the dictionary/solver, backgrounds, achievements, and
+personal scores work offline, including after closing and reopening the app.
+Multiplayer and global leaderboards still require an internet connection.
+Browser storage must be retained for offline play and saved progress.
+
+Production builds generate the manifest and a versioned service-worker cache
+with `vite-plugin-pwa`. New versions wait for **Update & reload** on the menu,
+or for all old app windows to close; the app does not automatically reload an
+active round. Service workers are disabled in the development server.
+
+To verify changes, build and preview, visit `/Boggle/`, wait for the offline-ready
+message, then switch the browser offline and reload. Start a solo round and
+check its results to exercise the cached dictionary and solver worker. To test
+updates, keep a preview tab open, change and rebuild the app, then reopen it in
+another tab to trigger the update check. Updates should wait for your choice.
 
 ## Balance file
 
