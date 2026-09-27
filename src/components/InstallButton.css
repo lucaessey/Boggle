@@ -1,0 +1,28 @@
+.pwa-install {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.pwa-install-button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pwa-install-button:hover {
+  background: var(--accent-bg);
+}
+
+.pwa-install-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

@@ -1,15 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import './PwaControls.css'
 
-interface InstallPrompt extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
 /** Stays mounted to catch browser events, but offers updates only off the board. */
-export function PwaControls({ visible }: { visible: boolean }) {
-  const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(null)
+export function PwaControls({ visible, installControl }: { visible: boolean; installControl: ReactNode }) {
   const [online, setOnline] = useState(() => navigator.onLine)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -33,39 +27,14 @@ export function PwaControls({ visible }: { visible: boolean }) {
   })
 
   useEffect(() => {
-    const captureInstall = (event: Event) => {
-      event.preventDefault()
-      setInstallPrompt(event as InstallPrompt)
-    }
-    const installed = () => setInstallPrompt(null)
     const connectionChanged = () => setOnline(navigator.onLine)
-    window.addEventListener('beforeinstallprompt', captureInstall)
-    window.addEventListener('appinstalled', installed)
     window.addEventListener('online', connectionChanged)
     window.addEventListener('offline', connectionChanged)
     return () => {
-      window.removeEventListener('beforeinstallprompt', captureInstall)
-      window.removeEventListener('appinstalled', installed)
       window.removeEventListener('online', connectionChanged)
       window.removeEventListener('offline', connectionChanged)
     }
   }, [])
-
-  async function install() {
-    if (!installPrompt) return
-    setBusy(true)
-    setError('')
-    try {
-      await installPrompt.prompt()
-      await installPrompt.userChoice
-    } catch {
-      setError('Use your browser menu to install Boggle.')
-    } finally {
-      // A beforeinstallprompt event can only be used once, even if dismissed.
-      setInstallPrompt(null)
-      setBusy(false)
-    }
-  }
 
   async function update() {
     setBusy(true)
@@ -101,9 +70,7 @@ export function PwaControls({ visible }: { visible: boolean }) {
           <button type="button" onClick={() => setOfflineReady(false)}>Got it</button>
         </div>
       ) : null}
-      {installPrompt && (
-        <button type="button" onClick={() => void install()} disabled={busy}>Install Boggle</button>
-      )}
+      {installControl}
       {error && <p role="alert">{error}</p>}
     </aside>
   )

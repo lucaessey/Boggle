@@ -4,10 +4,12 @@ import { BackgroundProvider } from './components/Background'
 import { AchievementsScreen } from './components/AchievementsScreen'
 import type { GameConfig } from './components/gameConfig'
 import { HighScoresScreen } from './components/HighScoresScreen'
+import { InstallButton } from './components/InstallButton'
 import { Menu } from './components/Menu'
 import { PeacefulRound } from './components/PeacefulRound'
 import { PwaControls } from './components/PwaControls'
 import { Round } from './components/Round'
+import { usePwaInstall } from './components/usePwaInstall'
 import './App.css'
 
 // Code-split: multiplayer and Firebase initialize only when Multiplayer opens.
@@ -21,9 +23,17 @@ function App() {
   const [showAchievements, setShowAchievements] = useState(false)
   const [showHighScores, setShowHighScores] = useState(false)
   const [showMultiplayer, setShowMultiplayer] = useState(false)
+  const installation = usePwaInstall()
 
   function content() {
-    if (showAchievements) return <AchievementsScreen onBack={() => setShowAchievements(false)} />
+    if (showAchievements) {
+      return (
+        <AchievementsScreen
+          onBack={() => setShowAchievements(false)}
+          installControl={<InstallButton installation={installation} />}
+        />
+      )
+    }
     if (showHighScores) return <HighScoresScreen onBack={() => setShowHighScores(false)} />
     if (showMultiplayer) {
       return (
@@ -89,7 +99,10 @@ function App() {
         <main className={`app${showTitle ? '' : ' compact'}`}>
           {showTitle && <h1>Boggle</h1>}
           {content()}
-          <PwaControls visible={showTitle} />
+          <PwaControls
+            visible={showTitle}
+            installControl={installation.canPrompt ? <InstallButton installation={installation} /> : null}
+          />
         </main>
       </AchievementsProvider>
     </BackgroundProvider>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { ACHIEVEMENTS, TOTAL_ACHIEVEMENTS } from '../core/stats/achievements'
 import { useAchievements } from './AchievementsContext'
 import './AchievementsScreen.css'
@@ -20,7 +20,7 @@ function formatDate(iso: string): string {
   }
 }
 
-export function AchievementsScreen({ onBack }: { onBack: () => void }) {
+export function AchievementsScreen({ onBack, installControl }: { onBack: () => void; installControl: ReactNode }) {
   const { stats, reset } = useAchievements()
   const { unlocked, totalAcceptedWords } = stats.lifetime
   const unlockedCount = Object.keys(unlocked).length
@@ -109,6 +109,7 @@ export function AchievementsScreen({ onBack }: { onBack: () => void }) {
           </a>
         ))}
       </section>
+      <footer className="ach-install">{installControl}</footer>
     </div>
   )
 }
